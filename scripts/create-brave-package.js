@@ -52,7 +52,7 @@ class BravePackageCreator {
     async createBravePuppeteer() {
         console.log('🎭 Creating brave-puppeteer-core package...');
 
-        const packageName = 'Brave-Real-Puppeteer-Core';
+        const packageName = 'brave-real-puppeteer-core';
         const packageDir = join(this.outputDir, packageName);
 
         // Clean and create package directory
@@ -140,7 +140,7 @@ class BravePackageCreator {
         );
 
         // Create brave-specific README
-        const braveReadme = `# 🦁 Brave-Real-Puppeteer-Core
+        const braveReadme = `# 🦁 brave-real-puppeteer-core
 
 **Brave Real-World Optimized Puppeteer Core with comprehensive stealth patches**
 
@@ -158,13 +158,13 @@ This is a pre-patched version of puppeteer-core optimized for maximum stealth wh
 ## 🚀 Installation
 
 \`\`\`bash
-npm install Brave-Real-Puppeteer-Core
+npm install brave-real-puppeteer-core
 \`\`\`
 
 ## 📚 Usage
 
 \`\`\`javascript
-import puppeteer from 'Brave-Real-Puppeteer-Core';
+import puppeteer from 'brave-real-puppeteer-core';
 
 const browser = await puppeteer.launch({
     // Brave browser will be auto-detected
@@ -199,7 +199,7 @@ await page.goto('https://bot-detector.rebrowser.net/');
 
         writeFileSync(join(packageDir, 'README.md'), braveReadme);
 
-        console.log(`✅ Brave-Real-Puppeteer-Core package created at: ${packageDir}`);
+        console.log(`✅ brave-real-puppeteer-core package created at: ${packageDir}`);
         return packageDir;
     }
 
@@ -209,7 +209,7 @@ await page.goto('https://bot-detector.rebrowser.net/');
     async createBravePlaywright() {
         console.log('🎪 Creating brave-playwright-core package...');
 
-        const packageName = 'Brave-Real-Playwright-Core';
+        const packageName = 'brave-real-playwright-core';
         const packageDir = join(this.outputDir, packageName);
 
         // Clean and create package directory
@@ -294,7 +294,7 @@ await page.goto('https://bot-detector.rebrowser.net/');
         );
 
         // Create brave-specific README
-        const braveReadme = `# 🦁 Brave-Real-Playwright-Core
+        const braveReadme = `# 🦁 brave-real-playwright-core
 
 **Brave Real-World Optimized Playwright Core with comprehensive stealth patches**
 
@@ -312,13 +312,13 @@ This is a pre-patched version of playwright-core optimized for maximum stealth w
 ## 🚀 Installation
 
 \`\`\`bash
-npm install Brave-Real-Playwright-Core
+npm install brave-real-playwright-core
 \`\`\`
 
 ## 📚 Usage
 
 \`\`\`javascript  
-import { chromium } from 'Brave-Real-Playwright-Core';
+import { chromium } from 'brave-real-playwright-core';
 
 const browser = await chromium.launch({
     // Brave browser will be auto-detected
@@ -353,7 +353,7 @@ await page.goto('https://bot-detector.rebrowser.net/');
 
         writeFileSync(join(packageDir, 'README.md'), braveReadme);
 
-        console.log(`✅ Brave-Real-Playwright-Core package created at: ${packageDir}`);
+        console.log(`✅ brave-real-playwright-core package created at: ${packageDir}`);
         return packageDir;
     }
 

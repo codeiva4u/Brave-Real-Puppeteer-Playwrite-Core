@@ -106,14 +106,13 @@
     "yargs": "^17.7.2"
   },
   "optionalDependencies": {
-    "puppeteer-core": "^24.19.0",
-    "playwright-core": "^1.55.0"
+    "playwright-core": "^1.55.0",
+    "puppeteer-core": "^24.19.0"
   },
   "devDependencies": {
     "test": "^3.3.0"
   },
   "peerDependencies": {
-    "puppeteer-core": ">=20.0.0",
-    "playwright-core": ">=1.40.0"
+    "puppeteer-core": ">=20.0.0"
   }
 }

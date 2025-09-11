@@ -174,14 +174,14 @@ jobs:
         shell: bash
         run: |
           ls -la dist/
-          echo "🦁 Brave-Real-Puppeteer-Core Package Info:"
-          cat dist/Brave-Real-Puppeteer-Core/package.json
+          echo "🦁 brave-real-puppeteer-core Package Info:"
+          cat dist/brave-real-puppeteer-core/package.json
           
       - name: 📤 Upload Puppeteer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Brave-Real-Puppeteer-Core
-          path: dist/Brave-Real-Puppeteer-Core/
+          name: brave-real-puppeteer-core
+          path: dist/brave-real-puppeteer-core/
           retention-days: 30
           
   build-playwright:
@@ -221,14 +221,14 @@ jobs:
         shell: bash
         run: |
           ls -la dist/
-          echo "🦁 Brave-Real-Playwright-Core Package Info:"
-          cat dist/Brave-Real-Playwright-Core/package.json
+          echo "🦁 brave-real-playwright-core Package Info:"
+          cat dist/brave-real-playwright-core/package.json
           
       - name: 📤 Upload Playwright Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Brave-Real-Playwright-Core
-          path: dist/Brave-Real-Playwright-Core/
+          name: brave-real-playwright-core
+          path: dist/brave-real-playwright-core/
           retention-days: 30
 
   publish:
@@ -257,37 +257,37 @@ jobs:
       - name: 📥 Download Puppeteer Artifact
         uses: actions/download-artifact@v4
         with:
-          name: Brave-Real-Puppeteer-Core
-          path: dist/Brave-Real-Puppeteer-Core/
+          name: brave-real-puppeteer-core
+          path: dist/brave-real-puppeteer-core/
           
       - name: 📥 Download Playwright Artifact
         uses: actions/download-artifact@v4
         with:
-          name: Brave-Real-Playwright-Core
-          path: dist/Brave-Real-Playwright-Core/
+          name: brave-real-playwright-core
+          path: dist/brave-real-playwright-core/
           
       - name: 📋 Verify Packages
         shell: bash
         run: |
           echo "=== Brave Puppeteer Package ==="
-          ls -la dist/Brave-Real-Puppeteer-Core/
+          ls -la dist/brave-real-puppeteer-core/
           echo "Package.json content:"
-          cat dist/Brave-Real-Puppeteer-Core/package.json | jq .
+          cat dist/brave-real-puppeteer-core/package.json | jq .
           echo ""
           echo "=== Brave Playwright Package ==="
-          ls -la dist/Brave-Real-Playwright-Core/
+          ls -la dist/brave-real-playwright-core/
           echo "Package.json content:"
-          cat dist/Brave-Real-Playwright-Core/package.json | jq .
+          cat dist/brave-real-playwright-core/package.json | jq .
           
       - name: 🔍 Check NPM Authentication
         run: npm whoami
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
-      - name: 🎭 Publish Brave-Real-Puppeteer-Core
+      - name: 🎭 Publish brave-real-puppeteer-core
         run: |
-          cd dist/Brave-Real-Puppeteer-Core
-          echo "🚀 Publishing Brave-Real-Puppeteer-Core v${{ needs.generate-version.outputs.brave-version }}..."
+          cd dist/brave-real-puppeteer-core
+          echo "🚀 Publishing brave-real-puppeteer-core v${{ needs.generate-version.outputs.brave-version }}..."
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
