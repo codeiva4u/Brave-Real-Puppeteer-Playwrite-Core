@@ -1,0 +1,164 @@
+--- a/lib/server/chromium/crConnection.js
++++ b/lib/server/chromium/crConnection.js
+@@ -282,6 +282,120 @@
+     process.env["REBROWSER_PATCHES_DEBUG"] && console.log(`[rebrowser-patches][getIsolatedWorld] result:`, createIsolatedWorldResult);
+     return createIsolatedWorldResult.executionContextId;
+   }
++  // rebrowser-stealth: comprehensive stealth script injection
++  __re__getStealthScript() {
++    return `
++      // Navigator stealth spoofing for Playwright
++      (function() {
++        // Remove webdriver property
++        if ('webdriver' in navigator) {
++          delete navigator.webdriver;
++        }
++        
++        Object.defineProperty(navigator, 'webdriver', {
++          get: () => undefined,
++          configurable: true,
++          enumerable: false
++        });
++        
++        // Realistic plugins
++        const realisticPlugins = [
++          { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
++          { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
++          { name: 'Native Client', filename: 'internal-nacl-plugin' }
++        ];
++        
++        Object.defineProperty(navigator, 'plugins', {
++          get: () => realisticPlugins,
++          configurable: true
++        });
++        
++        Object.defineProperty(navigator, 'languages', {
++          get: () => ['en-US', 'en'],
++          configurable: true
++        });
++        
++        // Remove chrome runtime indicators
++        if (window.chrome) {
++          delete window.chrome.runtime;
++          delete window.chrome.loadTimes;
++          delete window.chrome.csi;
++        }
++        
++        // Canvas fingerprint spoofing
++        const canvasProto = HTMLCanvasElement.prototype;
++        const originalToDataURL = canvasProto.toDataURL;
++        canvasProto.toDataURL = function(...args) {
++          const result = originalToDataURL.apply(this, args);
++          // Add entropy to break fingerprinting
++          return result.replace(/^data:image\\/png;base64,/, 
++            'data:image/png;base64,' + btoa(Math.random().toString()).substring(0, 2));
++        };
++        
++        // WebGL spoofing
++        const webglContexts = [WebGLRenderingContext];
++        if (typeof WebGL2RenderingContext !== 'undefined') {
++          webglContexts.push(WebGL2RenderingContext);
++        }
++        
++        webglContexts.forEach(WebGLContext => {
++          if (!WebGLContext.prototype) return;
++          
++          const originalGetParameter = WebGLContext.prototype.getParameter;
++          WebGLContext.prototype.getParameter = function(parameter) {
++            const gl = this;
++            switch (parameter) {
++              case gl.VENDOR:
++                return 'Google Inc.';
++              case gl.RENDERER:
++                return 'ANGLE (Intel(R) HD Graphics 620 Direct3D11 vs_5_0 ps_5_0)';
++              case 37445: // UNMASKED_VENDOR_WEBGL
++                return 'Google Inc.';
++              case 37446: // UNMASKED_RENDERER_WEBGL
++                return 'ANGLE (Intel(R) HD Graphics 620 Direct3D11 vs_5_0 ps_5_0)';
++              default:
++                return originalGetParameter.call(this, parameter);
++            }
++          };
++        });
++        
++        // Remove automation indicators
++        delete window._phantom;
++        delete window.__nightmare;
++        delete window.callPhantom;
++        delete window._selenium;
++        delete window.__selenium_unwrapped;
++        delete window.__puppeteer__;
++        delete window.puppeteer;
++        delete window.__playwright__;
++        delete window.playwright;
++        
++        // Screen spoofing
++        Object.defineProperty(screen, 'width', { get: () => 1920, configurable: true });
++        Object.defineProperty(screen, 'height', { get: () => 1080, configurable: true });
++        Object.defineProperty(screen, 'availWidth', { get: () => 1920, configurable: true });
++        Object.defineProperty(screen, 'availHeight', { get: () => 1040, configurable: true });
++        
++        // User agent consistency
++        const realisticUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
++        Object.defineProperty(navigator, 'userAgent', {
++          get: () => realisticUA,
++          configurable: true
++        });
++        
++        // DeviceMemory spoofing
++        if ('deviceMemory' in navigator) {
++          Object.defineProperty(navigator, 'deviceMemory', {
++            get: () => 8,
++            configurable: true
++          });
++        }
++        
++        process.env["REBROWSER_STEALTH_DEBUG"] && console.log('[rebrowser-stealth] Playwright stealth injection complete');
++      })();
++    `;
++  }
+ }
+ class CDPSession extends import_events.EventEmitter {
+   constructor(parentSession, sessionId) {
+
+--- a/lib/server/chromium/crPage.js
++++ b/lib/server/chromium/crPage.js
+@@ -616,6 +616,17 @@
+     }
+     this._crPage._networkManager.addSession(session, this._page._frameManager.frame(this._targetId) ?? void 0).catch(() => {
+     });
++    // rebrowser-stealth: inject stealth script for workers
++    if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
++      session.send("Runtime.evaluate", {
++        expression: session.__re__getStealthScript(),
++        returnByValue: false,
++        awaitPromise: false,
++        userGesture: false
++      }).catch(() => {
++        // Ignore stealth injection errors for workers
++      });
++    }
+     session._sendMayFail("Runtime.runIfWaitingForDebugger");
+   }
+   _onDetachedFromTarget(event) {
+
+--- a/lib/server/frames.js
++++ b/lib/server/frames.js
+@@ -624,6 +624,18 @@
+       }).catch((error) => {
+         if (error.message.includes("No frame for given id found")) {
+           return { destroyedReason: "Frame was detached" };
++        }
++        // rebrowser-stealth: inject stealth script before returning context
++        if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
++          crSession.send("Runtime.evaluate", {
++            expression: crSession.__re__getStealthScript(),
++            returnByValue: false,
++            awaitPromise: false,
++            userGesture: false
++          }).catch(() => {
++            // Ignore stealth injection errors
++          });
+         }
+         import_debugLogger.debugLogger.log("error", error);
+         console.error("[rebrowser-patches][frames._context] cannot get world, error:", error);

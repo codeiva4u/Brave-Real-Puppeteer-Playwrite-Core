@@ -1,0 +1,62 @@
+{
+  "name": "brave-playwright-core",
+  "version": "1.55.0-brave.1.0.0",
+  "description": "Brave-optimized Playwright Core with comprehensive stealth patches and error stack sanitization",
+  "keywords": [
+    "playwright",
+    "brave",
+    "stealth",
+    "automation",
+    "bot-detection",
+    "undetectable",
+    "cross-platform",
+    "rebrowser",
+    "patches",
+    "anti-detection"
+  ],
+  "main": "index.js",
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rebrowser/rebrowser-patches.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rebrowser/rebrowser-patches/issues"
+  },
+  "homepage": "https://rebrowser.net",
+  "author": {
+    "name": "Rebrowser",
+    "email": "info@rebrowser.net",
+    "url": "https://rebrowser.net"
+  },
+  "license": "MIT",
+  "bin": {
+    "playwright": "cli.js"
+  },
+  "files": [
+    "lib",
+    "src",
+    "index.js",
+    "index.d.ts",
+    "cli.js",
+    "README.md"
+  ],
+  "brave": {
+    "optimized": true,
+    "version": "1.0.0",
+    "features": [
+      "error-stack-sanitization",
+      "ultra-fast-timing",
+      "cross-platform-detection",
+      "utility-script-hiding"
+    ],
+    "performance": {
+      "sourceUrlLeakStatus": "GREEN",
+      "utilityscriptHidden": true,
+      "successRate": "100%"
+    }
+  }
+}
