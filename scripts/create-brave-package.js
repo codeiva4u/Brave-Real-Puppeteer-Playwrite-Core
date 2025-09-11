@@ -91,10 +91,10 @@ class BravePackageCreator {
             },
             repository: {
                 type: "git",
-                url: "git+https://github.com/rebrowser/rebrowser-patches.git"
+                url: "git+https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core.git"
             },
             bugs: {
-                url: "https://github.com/rebrowser/rebrowser-patches/issues"
+                url: "https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core/issues"
             },
             homepage: "https://rebrowser.net",
             author: {
@@ -192,9 +192,9 @@ await page.goto('https://bot-detector.rebrowser.net/');
 
 ## 🔗 Links
 
-- [Original Project](https://github.com/rebrowser/rebrowser-patches)
+- [Original Project](https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core)
 - [Documentation](https://rebrowser.net)
-- [Issues](https://github.com/rebrowser/rebrowser-patches/issues)
+- [Issues](https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core/issues)
 `;
 
         writeFileSync(join(packageDir, 'README.md'), braveReadme);
@@ -248,10 +248,10 @@ await page.goto('https://bot-detector.rebrowser.net/');
             },
             repository: {
                 type: "git",
-                url: "git+https://github.com/rebrowser/rebrowser-patches.git"
+                url: "git+https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core.git"
             },
             bugs: {
-                url: "https://github.com/rebrowser/rebrowser-patches/issues"
+                url: "https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core/issues"
             },
             homepage: "https://rebrowser.net",
             author: {
@@ -346,9 +346,9 @@ await page.goto('https://bot-detector.rebrowser.net/');
 
 ## 🔗 Links
 
-- [Original Project](https://github.com/rebrowser/rebrowser-patches)
+- [Original Project](https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core)
 - [Documentation](https://rebrowser.net)
-- [Issues](https://github.com/rebrowser/rebrowser-patches/issues)
+- [Issues](https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core/issues)
 `;
 
         writeFileSync(join(packageDir, 'README.md'), braveReadme);

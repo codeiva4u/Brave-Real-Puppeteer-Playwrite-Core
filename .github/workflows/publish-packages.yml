@@ -293,10 +293,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
         
-      - name: 🎪 Publish Brave-Real-Playwright-Core
+      - name: 🎪 Publish brave-real-playwright-core
         run: |
-          cd dist/Brave-Real-Playwright-Core
-          echo "🚀 Publishing Brave-Real-Playwright-Core v${{ needs.generate-version.outputs.brave-version }}..."
+          cd dist/brave-real-playwright-core
+          echo "🚀 Publishing brave-real-playwright-core v${{ needs.generate-version.outputs.brave-version }}..."
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -313,8 +313,8 @@ jobs:
             ## 🎉 New Release of Rebrowser Stealth Packages
             
             ### 📦 Published Packages:
-            - 🎭 **Brave-Real-Puppeteer-Core**: v${{ needs.generate-version.outputs.brave-version }}
-            - 🎪 **Brave-Real-Playwright-Core**: v${{ needs.generate-version.outputs.brave-version }}
+            - 🎭 **brave-real-puppeteer-core**: v${{ needs.generate-version.outputs.brave-version }}
+            - 🎪 **brave-real-playwright-core**: v${{ needs.generate-version.outputs.brave-version }}
             
             ### ⚡ Performance Metrics:
             - **dummyFn timing**: 25-30ms (150x improvement)
@@ -324,8 +324,8 @@ jobs:
             
             ### 🚀 Installation:
             ```bash
-            npm install Brave-Real-Puppeteer-Core
-            npm install Brave-Real-Playwright-Core
+            npm install brave-real-puppeteer-core
+            npm install brave-real-playwright-core
             ```
             
             ### 🏷️ Version Details:
@@ -366,27 +366,27 @@ jobs:
       - name: 📥 Download Puppeteer Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: Brave-Real-Puppeteer-Core
-          path: dist/Brave-Real-Puppeteer-Core/
+          name: brave-real-puppeteer-core
+          path: dist/brave-real-puppeteer-core/
           
       - name: 📥 Download Playwright Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: Brave-Real-Playwright-Core
-          path: dist/Brave-Real-Playwright-Core/
+          name: brave-real-playwright-core
+          path: dist/brave-real-playwright-core/
           
       - name: 🧪 Dry Run - Puppeteer
         run: |
-          echo "=== DRY RUN: Brave-Real-Puppeteer-Core Package ==="
+          echo "=== DRY RUN: brave-real-puppeteer-core Package ==="
           echo "🦁 Version: ${{ needs.generate-version.outputs.brave-version }}"
-          cd dist/Brave-Real-Puppeteer-Core
+          cd dist/brave-real-puppeteer-core
           npm pack --dry-run
           
       - name: 🧪 Dry Run - Playwright
         run: |
-          echo "=== DRY RUN: Brave-Real-Playwright-Core Package ==="
+          echo "=== DRY RUN: brave-real-playwright-core Package ==="
           echo "🦁 Version: ${{ needs.generate-version.outputs.brave-version }}"
-          cd dist/Brave-Real-Playwright-Core
+          cd dist/brave-real-playwright-core
           npm pack --dry-run
           
       - name: 📋 Summary
