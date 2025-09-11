@@ -54,6 +54,16 @@ function setStealthEnvironmentVariables() {
   process.env.REBROWSER_STEALTH_CANVAS_SPOOF = '1';
   process.env.REBROWSER_STEALTH_WEBGL_SPOOF = '1';
   process.env.REBROWSER_STEALTH_USERAGENT_SPOOF = '1';
+  // Advanced modules
+  process.env.REBROWSER_STEALTH_HEADLESS_BYPASS = '1';
+  process.env.REBROWSER_STEALTH_FONT_PROTECTION = '1';
+  process.env.REBROWSER_STEALTH_ADV_WEBGL = '1';
+  process.env.REBROWSER_STEALTH_NETWORK = '1';
+  process.env.REBROWSER_STEALTH_IFRAME_BYPASS = '1';
+  process.env.REBROWSER_STEALTH_HUMAN_BEHAVIOR = '1';
+  process.env.REBROWSER_STEALTH_HARDWARE = '1';
+  // Mobile simulation opt-in
+  process.env.REBROWSER_MOBILE_SIMULATION = process.env.REBROWSER_MOBILE_SIMULATION || '0';
   
   log('🎭 Stealth environment variables configured automatically');
 }

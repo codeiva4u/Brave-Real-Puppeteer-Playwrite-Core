@@ -194,10 +194,10 @@ export function injectFingerprintStealth() {
 // BULLETPROOF User Agent and Webdriver stealth
 export function injectBulletproofUserAgentStealth() {
     return `
-        // BULLETPROOF User Agent spoofing - NO HEADLESS DETECTION
+        // BULLETPROOF User Agent spoofing - BRAVE BROWSER DEFAULT
         (function() {
-            // Define BULLETPROOF user agent (NO HeadlessChrome/HeadlessBrave)
-            const bulletproofUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36';
+            // Define BULLETPROOF Brave user agent (NO HeadlessChrome/HeadlessBrave)
+            const bulletproofUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Brave/129.0.0.0';
             
             // COMPLETELY override navigator.userAgent
             Object.defineProperty(navigator, 'userAgent', {
@@ -625,6 +625,14 @@ export function getComprehensiveStealthScript() {
         ${injectViewportStealth()}
         ${injectPlaywrightAntiDetection()}
         ${injectUltraFastTiming()}
+        ${injectHeadlessBypass()}
+        ${injectFontStealth()}
+        ${injectAdvancedWebGLStealth()}
+        ${injectNetworkStealth()}
+        ${injectIframeBypass()}
+        ${injectHumanBehaviorSimulation()}
+        ${injectMobileSimulation()}
+        ${injectHardwareSpoofing()}
         
         // Remove common automation indicators
         (function() {
@@ -715,4 +723,475 @@ export function getPlaywrightOptimizedScript(options = {}) {
     }
     
     return script;
+}
+
+// 🛡️ ADVANCED STEALTH MODULES
+
+// Headless Detection Bypass
+export function injectHeadlessBypass() {
+    return `
+        (function() {
+            try {
+                // Hide headless flags
+                if (!window.chrome) {
+                    Object.defineProperty(window, 'chrome', { 
+                        value: { 
+                            runtime: undefined,
+                            csi: function() { return Math.random() * 1000; },
+                            loadTimes: function() { return { 
+                                startLoadTime: Date.now() - Math.random() * 1000,
+                                requestTime: Date.now() - Math.random() * 2000,
+                                loadEventStart: Date.now() - Math.random() * 500
+                            }; }
+                        }, 
+                        configurable: true 
+                    });
+                }
+                
+                // Permissions API consistency
+                if (navigator.permissions && navigator.permissions.query) {
+                    const originalQuery = navigator.permissions.query.bind(navigator.permissions);
+                    navigator.permissions.query = (parameters) => {
+                        if (parameters && parameters.name === 'notifications') {
+                            return Promise.resolve({ state: 'default' });
+                        }
+                        return originalQuery(parameters);
+                    };
+                }
+                
+                // Connection API spoofing
+                if ('connection' in navigator) {
+                    Object.defineProperty(navigator, 'connection', {
+                        get: () => ({
+                            downlink: 10,
+                            effectiveType: '4g',
+                            rtt: 50 + Math.random() * 50,
+                            saveData: false
+                        }),
+                        configurable: true
+                    });
+                }
+            } catch {}
+        })();
+    `;
+}
+
+// Font Fingerprint Protection
+export function injectFontStealth() {
+    return `
+        (function() {
+            try {
+                // Stabilize font measurements
+                const originalOffsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+                const originalOffsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+                const originalClientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
+                const originalClientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
+                
+                function stabilize(value) {
+                    return typeof value === 'number' ? Math.round(value / 2) * 2 : value;
+                }
+                
+                Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+                    get: function() { return stabilize(originalOffsetWidth.get.call(this)); },
+                    configurable: true
+                });
+                
+                Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+                    get: function() { return stabilize(originalOffsetHeight.get.call(this)); },
+                    configurable: true
+                });
+                
+                Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+                    get: function() { return stabilize(originalClientWidth.get.call(this)); },
+                    configurable: true
+                });
+                
+                Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+                    get: function() { return stabilize(originalClientHeight.get.call(this)); },
+                    configurable: true
+                });
+                
+                // CSS font loading detection
+                if (document.fonts && document.fonts.check) {
+                    const originalCheck = document.fonts.check.bind(document.fonts);
+                    document.fonts.check = function() {
+                        return true; // Always return fonts as available
+                    };
+                }
+            } catch {}
+        })();
+    `;
+}
+
+// Advanced WebGL Fingerprint Spoofing
+export function injectAdvancedWebGLStealth() {
+    return `
+        (function() {
+            try {
+                const contexts = [WebGLRenderingContext];
+                if (typeof WebGL2RenderingContext !== 'undefined') {
+                    contexts.push(WebGL2RenderingContext);
+                }
+                
+                const spoofData = {
+                    vendor: 'Google Inc.',
+                    renderer: 'ANGLE (NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0)',
+                    version: 'WebGL 1.0 (OpenGL ES 2.0 Chromium)',
+                    shadingLanguageVersion: 'WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)',
+                    extensions: [
+                        'WEBKIT_EXT_texture_filter_anisotropic',
+                        'EXT_texture_filter_anisotropic',
+                        'WEBKIT_WEBGL_compressed_texture_s3tc',
+                        'WEBGL_compressed_texture_s3tc'
+                    ]
+                };
+                
+                contexts.forEach(Context => {
+                    if (!Context || !Context.prototype) return;
+                    
+                    const originalGetParameter = Context.prototype.getParameter;
+                    Context.prototype.getParameter = function(parameter) {
+                        const gl = this;
+                        switch (parameter) {
+                            case gl.VENDOR: return 'WebKit';
+                            case gl.RENDERER: return 'WebKit WebGL';
+                            case 37445: // UNMASKED_VENDOR_WEBGL
+                                return spoofData.vendor;
+                            case 37446: // UNMASKED_RENDERER_WEBGL
+                                return spoofData.renderer;
+                            case gl.VERSION:
+                                return spoofData.version;
+                            case gl.SHADING_LANGUAGE_VERSION:
+                                return spoofData.shadingLanguageVersion;
+                            default:
+                                return originalGetParameter.call(this, parameter);
+                        }
+                    };
+                    
+                    const originalGetSupportedExtensions = Context.prototype.getSupportedExtensions;
+                    Context.prototype.getSupportedExtensions = function() {
+                        return spoofData.extensions;
+                    };
+                });
+            } catch {}
+        })();
+    `;
+}
+
+// Network Request Spoofing
+export function injectNetworkStealth() {
+    return `
+        (function() {
+            try {
+                // Connection pool / keep-alive optimization
+                if ('keepalive' in Request.prototype) {
+                    const original = window.fetch;
+                    window.fetch = function(input, init = {}) {
+                        init.keepalive = true;
+                        return original.call(this, input, init);
+                    }
+                }
+                
+                // Enhance fetch with realistic headers
+                const originalFetch = window.fetch;
+                window.fetch = function(input, init = {}) {
+                    init.headers = Object.assign({
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'DNT': '1',
+                        'Upgrade-Insecure-Requests': '1',
+                        'Sec-Fetch-Dest': 'document',
+                        'Sec-Fetch-Mode': 'navigate',
+                        'Sec-Fetch-Site': 'none',
+                        'Sec-Fetch-User': '?1',
+                        'Cache-Control': 'max-age=0'
+                    }, init.headers || {});
+                    return originalFetch.call(this, input, init);
+                };
+                
+                // Enhance XHR
+                const OriginalXHR = window.XMLHttpRequest;
+                function EnhancedXHR() {
+                    const xhr = new OriginalXHR();
+                    const originalOpen = xhr.open;
+                    xhr.open = function(method, url, async, user, password) {
+                        originalOpen.call(this, method, url, async, user, password);
+                        try {
+                            this.setRequestHeader('Accept-Language', 'en-US,en;q=0.9');
+                            this.setRequestHeader('DNT', '1');
+                            this.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        } catch {}
+                    };
+                    return xhr;
+                }
+                window.XMLHttpRequest = EnhancedXHR;
+                
+                // Resource timing spoofing
+                if (window.performance && window.performance.getEntriesByType) {
+                    const original = window.performance.getEntriesByType;
+                    window.performance.getEntriesByType = function(type) {
+                        const entries = original.call(this, type);
+                        // Add slight random delays to make timing look natural
+                        entries.forEach(entry => {
+                            if (entry.responseStart) entry.responseStart += Math.random() * 10;
+                            if (entry.responseEnd) entry.responseEnd += Math.random() * 20;
+                        });
+                        return entries;
+                    };
+                }
+            } catch {}
+        })();
+    `;
+}
+
+// Iframe Detection Bypass
+export function injectIframeBypass() {
+    return `
+        (function() {
+            try {
+                // Make window hierarchy appear natural
+                Object.defineProperty(window, 'top', {
+                    get: () => window,
+                    configurable: true
+                });
+                
+                Object.defineProperty(window, 'parent', {
+                    get: () => window,
+                    configurable: true
+                });
+                
+                Object.defineProperty(window, 'frameElement', {
+                    get: () => null,
+                    configurable: true
+                });
+                
+                // Self reference consistency
+                Object.defineProperty(window, 'self', {
+                    get: () => window,
+                    configurable: true
+                });
+            } catch {}
+        })();
+    `;
+}
+
+// Human Behavior Simulation
+export function injectHumanBehaviorSimulation() {
+    return `
+        (function() {
+            try {
+                let mouseX = 0, mouseY = 0;
+                
+                // Natural mouse movement simulation
+                const simulateMouseMove = () => {
+                    const newX = mouseX + (Math.random() - 0.5) * 50;
+                    const newY = mouseY + (Math.random() - 0.5) * 50;
+                    
+                    mouseX = Math.max(0, Math.min(window.innerWidth, newX));
+                    mouseY = Math.max(0, Math.min(window.innerHeight, newY));
+                    
+                    const event = new MouseEvent('mousemove', {
+                        clientX: mouseX,
+                        clientY: mouseY,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(event);
+                };
+                
+                // Natural scrolling simulation
+                const simulateScroll = () => {
+                    const currentScroll = window.scrollY;
+                    const maxScroll = document.body.scrollHeight - window.innerHeight;
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const distance = Math.random() * 200 * direction;
+                    const newScroll = Math.max(0, Math.min(maxScroll, currentScroll + distance));
+                    
+                    window.scrollTo({ top: newScroll, behavior: 'smooth' });
+                };
+                
+                // Random page interactions
+                const simulateInteraction = () => {
+                    if (Math.random() > 0.7) {
+                        // Random click simulation
+                        const x = Math.random() * window.innerWidth;
+                        const y = Math.random() * window.innerHeight;
+                        const clickEvent = new MouseEvent('click', {
+                            clientX: x,
+                            clientY: y,
+                            bubbles: true
+                        });
+                        document.elementFromPoint(x, y)?.dispatchEvent(clickEvent);
+                    }
+                };
+                
+                // Schedule natural behaviors
+                setInterval(simulateMouseMove, 2000 + Math.random() * 3000);
+                setInterval(simulateScroll, 5000 + Math.random() * 5000);
+                setInterval(simulateInteraction, 10000 + Math.random() * 10000);
+                
+                // Human-like typing helper
+                window.__rebrowser_typeHuman__ = async (element, text) => {
+                    for (const char of text) {
+                        element.value += char;
+                        element.dispatchEvent(new Event('input', { bubbles: true }));
+                        await new Promise(resolve => setTimeout(resolve, 80 + Math.random() * 120));
+                    }
+                };
+                
+                // Page visibility simulation
+                let visibilityState = 'visible';
+                Object.defineProperty(document, 'visibilityState', {
+                    get: () => visibilityState,
+                    configurable: true
+                });
+                
+                // Simulate focus/blur cycles
+                setTimeout(() => {
+                    setInterval(() => {
+                        if (Math.random() > 0.9) {
+                            const event = Math.random() > 0.5 ? 'focus' : 'blur';
+                            window.dispatchEvent(new Event(event));
+                        }
+                    }, 30000);
+                }, 5000);
+            } catch {}
+        })();
+    `;
+}
+
+// Mobile Browser Simulation
+export function injectMobileSimulation() {
+    return `
+        (function() {
+            try {
+                if (process.env.REBROWSER_MOBILE_SIMULATION === '1') {
+                    // Touch support
+                    Object.defineProperty(navigator, 'maxTouchPoints', {
+                        get: () => 5,
+                        configurable: true
+                    });
+                    
+                    // Mobile viewport
+                    Object.defineProperty(screen, 'width', {
+                        get: () => 390,
+                        configurable: true
+                    });
+                    
+                    Object.defineProperty(screen, 'height', {
+                        get: () => 844,
+                        configurable: true
+                    });
+                    
+                    Object.defineProperty(screen, 'availWidth', {
+                        get: () => 390,
+                        configurable: true
+                    });
+                    
+                    Object.defineProperty(screen, 'availHeight', {
+                        get: () => 844,
+                        configurable: true
+                    });
+                    
+                    // Mobile user agent
+                    const mobileUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+                    Object.defineProperty(navigator, 'userAgent', {
+                        get: () => mobileUA,
+                        configurable: true
+                    });
+                    
+                    // Touch events simulation
+                    window.addEventListener('click', (e) => {
+                        const touch = new Touch({
+                            identifier: 1,
+                            target: e.target,
+                            clientX: e.clientX,
+                            clientY: e.clientY,
+                            pageX: e.pageX,
+                            pageY: e.pageY,
+                            screenX: e.screenX,
+                            screenY: e.screenY
+                        });
+                        
+                        const touchEvent = new TouchEvent('touchstart', {
+                            touches: [touch],
+                            targetTouches: [touch],
+                            changedTouches: [touch],
+                            bubbles: true
+                        });
+                        e.target.dispatchEvent(touchEvent);
+                    });
+                }
+            } catch {}
+        })();
+    `;
+}
+
+// Hardware Fingerprint Spoofing
+export function injectHardwareSpoofing() {
+    return `
+        (function() {
+            try {
+                // CPU spoofing
+                Object.defineProperty(navigator, 'hardwareConcurrency', {
+                    get: () => 8,
+                    configurable: true
+                });
+                
+                // Memory spoofing
+                if ('deviceMemory' in navigator) {
+                    Object.defineProperty(navigator, 'deviceMemory', {
+                        get: () => 8,
+                        configurable: true
+                    });
+                }
+                
+                // Battery API spoofing
+                if ('getBattery' in navigator) {
+                    navigator.getBattery = () => Promise.resolve({
+                        charging: true,
+                        level: 0.75 + Math.random() * 0.2,
+                        chargingTime: 1800 + Math.random() * 600,
+                        dischargingTime: Infinity,
+                        addEventListener: () => {},
+                        removeEventListener: () => {},
+                        dispatchEvent: () => true
+                    });
+                }
+                
+                // Storage quota spoofing
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    const originalEstimate = navigator.storage.estimate.bind(navigator.storage);
+                    navigator.storage.estimate = () => Promise.resolve({
+                        quota: 120000000000 + Math.random() * 10000000000,
+                        usage: 50000000 + Math.random() * 10000000,
+                        usageDetails: {
+                            indexedDB: 30000000 + Math.random() * 5000000,
+                            caches: 20000000 + Math.random() * 5000000
+                        }
+                    });
+                }
+                
+                // Media devices spoofing
+                if ('mediaDevices' in navigator && 'enumerateDevices' in navigator.mediaDevices) {
+                    const originalEnumerate = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+                    navigator.mediaDevices.enumerateDevices = () => Promise.resolve([
+                        {
+                            deviceId: 'default',
+                            kind: 'audioinput',
+                            label: 'Default - Microphone (Realtek High Definition Audio)',
+                            groupId: 'group1'
+                        },
+                        {
+                            deviceId: 'webcam1',
+                            kind: 'videoinput', 
+                            label: 'HD WebCam (USB Video Device)',
+                            groupId: 'group2'
+                        }
+                    ]);
+                }
+            } catch {}
+        })();
+    `;
 }

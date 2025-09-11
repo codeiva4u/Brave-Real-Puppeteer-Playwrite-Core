@@ -76,6 +76,9 @@
     "create-brave-playwright": "node ./scripts/create-brave-package.js --engine=playwright",
     "create-brave-packages": "npm run create-brave-puppeteer && npm run create-brave-playwright",
     "check-versions": "node ./scripts/check-versions.js",
+    "test-bot-detector": "node ./scripts/test-bot-detector.js",
+    "test-bot-detector-headless": "node ./scripts/test-bot-detector.js --headless",
+    "test-bot-detector-mobile": "node ./scripts/test-bot-detector.js --mobile",
     "test": "npm run ai-agent"
   },
   "dependencies": {
