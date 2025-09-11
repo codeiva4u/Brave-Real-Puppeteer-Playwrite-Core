@@ -31,13 +31,14 @@ jobs:
         run: npm ci
         
       - name: 📋 Validate Project Structure
+        shell: bash
         run: |
           echo "Validating project structure..."
-          dir
+          ls -la
           echo "Scripts directory:"
-          dir scripts\*
+          ls -la scripts/ || echo "Scripts directory not found"
           echo "AI Agent exists:"
-          dir scripts\ai-agent.js 2>NUL || echo "AI Agent not found"
+          ls -la scripts/ai-agent.js || echo "AI Agent not found"
           
       - name: 🎭 Test Puppeteer Setup
         run: |

@@ -62,10 +62,12 @@ jobs:
         continue-on-error: true
         
       - name: ✅ Validate Project Structure
+        shell: bash
         run: |
           echo "Checking project structure..."
-          ls -la || dir
-          ls -la scripts/ || dir scripts\*
+          ls -la
+          echo "Scripts directory:"
+          ls -la scripts/ || echo "Scripts directory not found"
           
   # Job: Generate automatic version and tags
   generate-version:
@@ -169,10 +171,11 @@ jobs:
           node ./scripts/create-brave-package.js --engine=puppeteer --version="${{ needs.generate-version.outputs.brave-version }}"
         
       - name: 📋 Validate Package
+        shell: bash
         run: |
-          ls -la dist/ || dir dist\*
+          ls -la dist/
           echo "🦁 Brave-Real-Puppeteer-Core Package Info:"
-          cat dist/Brave-Real-Puppeteer-Core/package.json || type dist\Brave-Real-Puppeteer-Core\package.json
+          cat dist/Brave-Real-Puppeteer-Core/package.json
           
       - name: 📤 Upload Puppeteer Artifact
         uses: actions/upload-artifact@v4
@@ -215,10 +218,11 @@ jobs:
           node ./scripts/create-brave-package.js --engine=playwright --version="${{ needs.generate-version.outputs.brave-version }}"
         
       - name: 📋 Validate Package
+        shell: bash
         run: |
-          ls -la dist/ || dir dist\*
+          ls -la dist/
           echo "🦁 Brave-Real-Playwright-Core Package Info:"
-          cat dist/Brave-Real-Playwright-Core/package.json || type dist\Brave-Real-Playwright-Core\package.json
+          cat dist/Brave-Real-Playwright-Core/package.json
           
       - name: 📤 Upload Playwright Artifact
         uses: actions/upload-artifact@v4
@@ -263,16 +267,17 @@ jobs:
           path: dist/Brave-Real-Playwright-Core/
           
       - name: 📋 Verify Packages
+        shell: bash
         run: |
           echo "=== Brave Puppeteer Package ==="
-          ls -la dist/Brave-Real-Puppeteer-Core/ || dir dist\Brave-Real-Puppeteer-Core\*
+          ls -la dist/Brave-Real-Puppeteer-Core/
           echo "Package.json content:"
-          cat dist/Brave-Real-Puppeteer-Core/package.json | jq . || type dist\Brave-Real-Puppeteer-Core\package.json
+          cat dist/Brave-Real-Puppeteer-Core/package.json | jq .
           echo ""
           echo "=== Brave Playwright Package ==="
-          ls -la dist/Brave-Real-Playwright-Core/ || dir dist\Brave-Real-Playwright-Core\*
+          ls -la dist/Brave-Real-Playwright-Core/
           echo "Package.json content:"
-          cat dist/Brave-Real-Playwright-Core/package.json | jq . || type dist\Brave-Real-Playwright-Core\package.json
+          cat dist/Brave-Real-Playwright-Core/package.json | jq .
           
       - name: 🔍 Check NPM Authentication
         run: npm whoami
