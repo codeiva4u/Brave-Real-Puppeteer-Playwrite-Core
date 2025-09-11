@@ -1,109 +1,23 @@
---- a/packages/playwright-core/src/server/chromium/crExecutionContext.ts
-+++ b/packages/playwright-core/src/server/chromium/crExecutionContext.ts
-@@ -14,6 +14,42 @@
+--- a/lib/server/chromium/crExecutionContext.js
++++ b/lib/server/chromium/crExecutionContext.js
+@@ -14,6 +14,20 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
 +
-+// REBROWSER STEALTH: Enhanced Playwright anti-detection script
 +const REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT = `
-+(() => {
-+  const playwrightStealth = {
-+    removeWebdriver() {
-+      if ('webdriver' in navigator) {
-+        delete navigator.webdriver;
-+      }
-+      Object.defineProperty(navigator, 'webdriver', {
-+        get: () => undefined,
-+        set: () => {},
-+        configurable: false,
-+        enumerable: false
-+      });
-+    },
-+    
-+    spoofUserAgent() {
-+      const realisticUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.81 Safari/537.36';
-+      
-+      Object.defineProperty(navigator, 'userAgent', {
-+        get: () => realisticUA,
-+        configurable: true,
-+        enumerable: false
-+      });
-+      
-+      Object.defineProperty(navigator, 'appVersion', {
-+        get: () => '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.81 Safari/537.36',
-+        configurable: true,
-+        enumerable: false
-+      });
-+    },
-+    
-+    init() {
-+      this.removeWebdriver();
-+      this.spoofUserAgent();
-+    }
-+  };
-+  
-+  playwrightStealth.init();
++(function() {
++  if ('webdriver' in navigator) {
++    delete navigator.webdriver;
++  }
++  Object.defineProperty(navigator, 'webdriver', {
++    get: () => undefined,
++    configurable: false,
++    enumerable: false
++  });
 +})();
 +`;
 +
- import { EventEmitter } from 'events';
- import type * as channels from '@protocol/channels';
- import { serializeError } from '../errors';
-@@ -37,6 +37,15 @@
-     this._sessionId = sessionId;
-   }
- 
-+  // rebrowser-stealth: get stealth script for injection
-+  __re__getStealthScript(): string {
-+    return REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT;
-+  }
-+
-+  // rebrowser-stealth: inject stealth script
-+  async injectStealthScript(): Promise<void> {
-+    await this.evaluate(false /* returnByValue */, this.__re__getStealthScript(), false /* isFunction */, undefined, 'main');
-+  }
-+
-   async rawEvaluateJSON(expression: string): Promise<any> {
-     const { exceptionDetails, result: remoteObject } = await this._session.send('Runtime.evaluate', {
-       expression,
---- a/packages/playwright-core/src/server/chromium/crPage.ts
-+++ b/packages/playwright-core/src/server/chromium/crPage.ts
-@@ -125,6 +125,16 @@
-     this._page._frameManager.frameAttached(frameId, parentFrameId);
-   }
- 
-+  // rebrowser-stealth: inject stealth on new frames  
-+  async _injectStealthOnFrame(frameId: string): Promise<void> {
-+    if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
-+      try {
-+        const context = await this._page._frameManager.frame(frameId)?.evaluateExpression(REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT, false, undefined, 'main');
-+      } catch (e) {
-+        // Ignore stealth injection errors
-+      }
-+    }
-+  }
-+
-   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-     this._page._frameManager.frameCommitted(framePayload.id, framePayload.url, framePayload.name || '', framePayload.urlFragment, initial);
-   }
---- a/packages/playwright-core/src/server/frames.ts
-+++ b/packages/playwright-core/src/server/frames.ts
-@@ -234,6 +234,16 @@
-     return context;
-   }
- 
-+  // rebrowser-stealth: inject stealth script after context creation
-+  async _injectStealthAfterContext(context: any): Promise<void> {
-+    if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
-+      try {
-+        await context.injectStealthScript();
-+      } catch (e) {
-+        // Ignore stealth injection errors
-+      }
-+    }
-+  }
-+
-   async _contextDestroyed(executionContextId: number) {
-     const context = this._contextIdToContext.get(executionContextId);
-     if (!context)
+ const { EventEmitter } = require('events');
+ const { serializeError } = require('../errors');
+ const { isUnderTest } = require('../../utils');

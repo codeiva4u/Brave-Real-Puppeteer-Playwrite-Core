@@ -1,62 +1,29 @@
 --- a/lib/server/chromium/crConnection.js
 +++ b/lib/server/chromium/crConnection.js
-@@ -282,6 +282,60 @@
+@@ -282,6 +282,30 @@
      process.env["REBROWSER_PATCHES_DEBUG"] && console.log(`[rebrowser-patches][getIsolatedWorld] result:`, createIsolatedWorldResult);
      return createIsolatedWorldResult.executionContextId;
    }
-+  // rebrowser-stealth: comprehensive stealth script injection
 +  __re__getStealthScript() {
 +    return `
 +      (function() {
 +        if ('webdriver' in navigator) {
 +          delete navigator.webdriver;
 +        }
-+        
 +        Object.defineProperty(navigator, 'webdriver', {
 +          get: () => undefined,
 +          configurable: true,
 +          enumerable: false
 +        });
-+        
-+        const realisticPlugins = [
-+          { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
-+          { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
-+          { name: 'Native Client', filename: 'internal-nacl-plugin' }
-+        ];
-+        
-+        Object.defineProperty(navigator, 'plugins', {
-+          get: () => realisticPlugins,
-+          configurable: true
-+        });
-+        
-+        Object.defineProperty(navigator, 'languages', {
-+          get: () => ['en-US', 'en'],
-+          configurable: true
-+        });
-+        
 +        if (window.chrome) {
 +          delete window.chrome.runtime;
 +          delete window.chrome.loadTimes;
 +          delete window.chrome.csi;
 +        }
-+        
-+        const indicators = ['_phantom', '__nightmare', 'callPhantom', '_selenium', 
-+                          '__selenium_unwrapped', '__puppeteer__', 'puppeteer', 
-+                          '__playwright__', 'playwright'];
-+        
-+        indicators.forEach(indicator => {
++        ['_phantom', '__nightmare', 'callPhantom', '_selenium', 
++         '__selenium_unwrapped', '__puppeteer__', 'puppeteer', 
++         '__playwright__', 'playwright'].forEach(indicator => {
 +          if (window[indicator]) delete window[indicator];
-+        });
-+        
-+        Object.defineProperty(screen, 'width', { get: () => 1920, configurable: true });
-+        Object.defineProperty(screen, 'height', { get: () => 1080, configurable: true });
-+        Object.defineProperty(screen, 'availWidth', { get: () => 1920, configurable: true });
-+        Object.defineProperty(screen, 'availHeight', { get: () => 1040, configurable: true });
-+        
-+        const realisticUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-+        Object.defineProperty(navigator, 'userAgent', {
-+          get: () => realisticUA,
-+          configurable: true
 +        });
 +      })();
 +    `;
@@ -64,43 +31,3 @@
  }
  class CDPSession extends import_events.EventEmitter {
    constructor(parentSession, sessionId) {
---- a/lib/server/chromium/crPage.js
-+++ b/lib/server/chromium/crPage.js
-@@ -616,6 +616,17 @@
-     }
-     this._crPage._networkManager.addSession(session, this._page._frameManager.frame(this._targetId) ?? void 0).catch(() => {
-     });
-+    // rebrowser-stealth: inject stealth script for workers
-+    if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
-+      session.send("Runtime.evaluate", {
-+        expression: session.__re__getStealthScript(),
-+        returnByValue: false,
-+        awaitPromise: false,
-+        userGesture: false
-+      }).catch(() => {
-+        // Ignore stealth injection errors for workers
-+      });
-+    }
-     session._sendMayFail("Runtime.runIfWaitingForDebugger");
-   }
-   _onDetachedFromTarget(event) {
---- a/lib/server/frames.js
-+++ b/lib/server/frames.js
-@@ -624,6 +624,18 @@
-       }).catch((error) => {
-         if (error.message.includes("No frame for given id found")) {
-           return { destroyedReason: "Frame was detached" };
-+        }
-+        // rebrowser-stealth: inject stealth script before returning context
-+        if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
-+          crSession.send("Runtime.evaluate", {
-+            expression: crSession.__re__getStealthScript(),
-+            returnByValue: false,
-+            awaitPromise: false,
-+            userGesture: false
-+          }).catch(() => {
-+            // Ignore stealth injection errors
-+          });
-         }
-         import_debugLogger.debugLogger.log("error", error);
-         console.error("[rebrowser-patches][frames._context] cannot get world, error:", error);
