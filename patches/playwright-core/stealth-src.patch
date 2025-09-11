@@ -1,9 +1,9 @@
 --- a/lib/server/chromium/crExecutionContext.js
 +++ b/lib/server/chromium/crExecutionContext.js
-@@ -14,6 +14,20 @@
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
+@@ -39,6 +39,20 @@
+ var import_utilityScriptSerializers = require("../../utils/isomorphic/utilityScriptSerializers");
+ var js = __toESM(require("../javascript"));
+ var dom = __toESM(require("../dom"));
 +
 +const REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT = `
 +(function() {
@@ -18,6 +18,6 @@
 +})();
 +`;
 +
- const { EventEmitter } = require('events');
- const { serializeError } = require('../errors');
- const { isUnderTest } = require('../../utils');
+ var import_protocolError = require("../protocolError");
+ class CRExecutionContext {
+   constructor(client, contextPayload) {
