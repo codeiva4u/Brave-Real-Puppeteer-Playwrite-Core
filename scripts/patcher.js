@@ -95,8 +95,8 @@ async function createBackup(packagePath, packageName, codeTarget) {
 
   // Handle special commands
   if (command === 'patch-all') {
-    log('🔄 Patching all supported packages...')
-    const packages = ['puppeteer-core', 'playwright-core'];
+    const packages = packageName ? [packageName] : ['puppeteer-core', 'playwright-core'];
+    log(`🔄 Patching ${packageName ? packageName : 'all supported packages'}...`);
     let allSuccess = true;
     
     for (const pkg of packages) {
@@ -110,9 +110,24 @@ async function createBackup(packagePath, packageName, codeTarget) {
             const patchPath = resolve(getPatcherPackagePath(), `./patches/${pkg}/${target}.patch`);
             await access(patchPath, constants.F_OK);
             
-            const patchCmd = getPatchBaseCmd(patchPath);
-            await exec(patchCmd, { cwd: pkgPath });
-            log(`✅ ${pkg}/${target} patched successfully`);
+            // Check if already patched first
+            let patchStatus = 'unknown';
+            try {
+              await exec(`${getPatchBaseCmd(patchPath)} --dry-run`, { cwd: pkgPath });
+              patchStatus = 'unpatched';
+            } catch (e) {
+              if (e.stdout && e.stdout.includes('Ignoring previously applied')) {
+                patchStatus = 'patched';
+              }
+            }
+            
+            if (patchStatus === 'patched') {
+              log(`✅ ${pkg}/${target} already patched`);
+            } else {
+              const patchCmd = getPatchBaseCmd(patchPath);
+              await exec(patchCmd, { cwd: pkgPath });
+              log(`✅ ${pkg}/${target} patched successfully`);
+            }
           } catch (error) {
             log(`⚠️ ${pkg}/${target} patch failed: ${error.message}`);
           }
@@ -123,7 +138,7 @@ async function createBackup(packagePath, packageName, codeTarget) {
       }
     }
     
-    log(allSuccess ? '🎉 All packages patched!' : '⚠️ Some packages failed to patch');
+    log(allSuccess ? '🎉 Patches completed!' : '⚠️ Some patches failed');
     process.exit(allSuccess ? 0 : 1);
   }
   
