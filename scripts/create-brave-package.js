@@ -41,9 +41,16 @@ const argv = yargs(hideBin(process.argv))
 class BravePackageCreator {
     constructor(options = {}) {
         this.outputDir = resolve(projectRoot, options.output || 'dist');
-        this.puppeteerVersion = '24.19.0';
-        this.playwrightVersion = '1.55.0';
+        
+        // Get dynamic versions from package.json
+        const packageJsonPath = resolve(projectRoot, 'package.json');
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+        
+        this.puppeteerVersion = packageJson.optionalDependencies?.['puppeteer-core']?.replace('^', '') || '24.19.0';
+        this.playwrightVersion = packageJson.optionalDependencies?.['playwright-core']?.replace('^', '') || '1.55.0';
         this.braveVersion = options.version || '1.0.0';
+        
+        console.log(`📊 Using versions: Puppeteer ${this.puppeteerVersion}, Playwright ${this.playwrightVersion}`);
     }
 
     /**
@@ -65,7 +72,7 @@ class BravePackageCreator {
         const puppeteerPath = resolve(projectRoot, 'node_modules', 'puppeteer-core');
         if (!existsSync(puppeteerPath)) {
             console.log('📦 Installing puppeteer-core...');
-            execSync('npm install puppeteer-core@24.19.0', { cwd: projectRoot, stdio: 'inherit' });
+            execSync(`npm install puppeteer-core@${this.puppeteerVersion}`, { cwd: projectRoot, stdio: 'inherit' });
         }
 
         // Skip patching since packages are already patched in the working project
@@ -222,7 +229,7 @@ await page.goto('https://bot-detector.rebrowser.net/');
         const playwrightPath = resolve(projectRoot, 'node_modules', 'playwright-core');
         if (!existsSync(playwrightPath)) {
             console.log('📦 Installing playwright-core...');
-            execSync('npm install playwright-core@1.55.0', { cwd: projectRoot, stdio: 'inherit' });
+            execSync(`npm install playwright-core@${this.playwrightVersion}`, { cwd: projectRoot, stdio: 'inherit' });
         }
 
         // Skip patching since packages are already patched in the working project
