@@ -191,23 +191,91 @@ export function injectFingerprintStealth() {
     `;
 }
 
-// Enhanced user agent spoofing with latest Chrome version
-export function injectUserAgentStealth() {
+// BULLETPROOF User Agent and Webdriver stealth
+export function injectBulletproofUserAgentStealth() {
     return `
-        // Enhanced user agent spoofing with latest Chrome version for faster tests
-        const realisticUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.81 Safari/537.36';
-        
-        Object.defineProperty(navigator, 'userAgent', {
-            get: () => realisticUserAgent,
-            configurable: true,
-            enumerable: false
-        });
-        
-        Object.defineProperty(navigator, 'appVersion', {
-            get: () => '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.81 Safari/537.36',
-            configurable: true,
-            enumerable: false
-        });
+        // BULLETPROOF User Agent spoofing - NO HEADLESS DETECTION
+        (function() {
+            // Define BULLETPROOF user agent (NO HeadlessChrome/HeadlessBrave)
+            const bulletproofUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36';
+            
+            // COMPLETELY override navigator.userAgent
+            Object.defineProperty(navigator, 'userAgent', {
+                get: () => bulletproofUserAgent,
+                configurable: false,
+                enumerable: true
+            });
+            
+            // COMPLETELY override appVersion
+            Object.defineProperty(navigator, 'appVersion', {
+                get: () => '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+                configurable: false,
+                enumerable: true
+            });
+            
+            // BULLETPROOF webdriver property elimination
+            if ('webdriver' in navigator) {
+                delete navigator.webdriver;
+            }
+            
+            // PREVENT webdriver property from being redefined
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+                set: () => {},
+                configurable: false,
+                enumerable: false
+            });
+            
+            // OVERRIDE Object.getOwnPropertyDescriptor to hide our modifications
+            const originalGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+            Object.getOwnPropertyDescriptor = function(obj, prop) {
+                if (obj === navigator && prop === 'webdriver') {
+                    return undefined;
+                }
+                return originalGetOwnPropertyDescriptor.call(this, obj, prop);
+            };
+            
+            // OVERRIDE Object.getOwnPropertyNames to hide webdriver
+            const originalGetOwnPropertyNames = Object.getOwnPropertyNames;
+            Object.getOwnPropertyNames = function(obj) {
+                const props = originalGetOwnPropertyNames.call(this, obj);
+                if (obj === navigator) {
+                    return props.filter(prop => prop !== 'webdriver');
+                }
+                return props;
+            };
+            
+            // BULLETPROOF platform detection
+            Object.defineProperty(navigator, 'platform', {
+                get: () => 'Win32',
+                configurable: false,
+                enumerable: true
+            });
+            
+            // REMOVE ALL automation signatures
+            const automationProps = [
+                '__selenium_unwrapped', '__selenium_evaluate', '__selenium_script_fn',
+                '__fxdriver_unwrapped', '__fxdriver_evaluate', '__fxdriver_script_fn',
+                '__driver_unwrapped', '__driver_evaluate', '__webdriver_evaluate',
+                '__webdriver_script_fn', '__webdriver_unwrapped',
+                '_phantom', '__nightmare', 'callPhantom', '_selenium',
+                '__puppeteer__', 'puppeteer', '__playwright__', 'playwright',
+                '__rebrowser_patches', '__rebrowser_stealth'
+            ];
+            
+            automationProps.forEach(prop => {
+                if (window[prop]) {
+                    delete window[prop];
+                }
+                // Prevent redefinition
+                Object.defineProperty(window, prop, {
+                    get: () => undefined,
+                    set: () => {},
+                    configurable: false,
+                    enumerable: false
+                });
+            });
+        })();
         
         // Enhanced userAgentData with getHighEntropyValues method
         Object.defineProperty(navigator, 'userAgentData', {
@@ -547,13 +615,13 @@ export function injectPlaywrightAntiDetection() {
     `;
 }
 
-// Comprehensive stealth injection with all optimizations
+// BULLETPROOF Comprehensive stealth injection with all optimizations
 export function getComprehensiveStealthScript() {
     return `
         ${injectErrorStackSanitization()}
         ${injectNavigatorStealth()}
         ${injectFingerprintStealth()}
-        ${injectUserAgentStealth()}
+        ${injectBulletproofUserAgentStealth()}
         ${injectViewportStealth()}
         ${injectPlaywrightAntiDetection()}
         ${injectUltraFastTiming()}

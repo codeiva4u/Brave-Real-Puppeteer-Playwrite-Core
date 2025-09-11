@@ -23,18 +23,52 @@
 +    // rebrowser-stealth: inject comprehensive stealth scripts
 +    #getStealthScript() {
 +        return `
-+            // Navigator stealth spoofing
++            // BULLETPROOF Navigator stealth spoofing
 +            (function() {
-+                // Remove webdriver property completely
++                // BULLETPROOF User Agent (NO HeadlessChrome/HeadlessBrave)
++                const bulletproofUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36';
++                
++                Object.defineProperty(navigator, 'userAgent', {
++                    get: () => bulletproofUserAgent,
++                    configurable: false,
++                    enumerable: true
++                });
++                
++                Object.defineProperty(navigator, 'appVersion', {
++                    get: () => '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
++                    configurable: false,
++                    enumerable: true
++                });
++                
++                // BULLETPROOF webdriver elimination
 +                if ('webdriver' in navigator) {
 +                    delete navigator.webdriver;
 +                }
 +                
 +                Object.defineProperty(navigator, 'webdriver', {
 +                    get: () => undefined,
-+                    configurable: true,
++                    set: () => {},
++                    configurable: false,
 +                    enumerable: false
 +                });
++                
++                // Hide webdriver from Object inspection
++                const originalGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
++                Object.getOwnPropertyDescriptor = function(obj, prop) {
++                    if (obj === navigator && prop === 'webdriver') {
++                        return undefined;
++                    }
++                    return originalGetOwnPropertyDescriptor.call(this, obj, prop);
++                };
++                
++                const originalGetOwnPropertyNames = Object.getOwnPropertyNames;
++                Object.getOwnPropertyNames = function(obj) {
++                    const props = originalGetOwnPropertyNames.call(this, obj);
++                    if (obj === navigator) {
++                        return props.filter(prop => prop !== 'webdriver');
++                    }
++                    return props;
++                };
 +                
 +                // Realistic plugins array
 +                const realisticPlugins = [
