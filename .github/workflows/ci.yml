@@ -33,11 +33,11 @@ jobs:
       - name: 📋 Validate Project Structure
         run: |
           echo "Validating project structure..."
-          ls -la
+          dir
           echo "Scripts directory:"
-          ls -la scripts/
+          dir scripts\*
           echo "AI Agent exists:"
-          ls -la scripts/ai-agent.js || echo "AI Agent not found"
+          dir scripts\ai-agent.js 2>NUL || echo "AI Agent not found"
           
       - name: 🎭 Test Puppeteer Setup
         run: |

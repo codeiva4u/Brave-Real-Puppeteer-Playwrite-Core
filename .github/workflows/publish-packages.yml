@@ -64,8 +64,8 @@ jobs:
       - name: ✅ Validate Project Structure
         run: |
           echo "Checking project structure..."
-          ls -la
-          ls -la scripts/
+          ls -la || dir
+          ls -la scripts/ || dir scripts\*
           
   # Job: Generate automatic version and tags
   generate-version:
@@ -170,9 +170,9 @@ jobs:
         
       - name: 📋 Validate Package
         run: |
-          ls -la dist/
+          ls -la dist/ || dir dist\*
           echo "🦁 Brave-Real-Puppeteer-Core Package Info:"
-          cat dist/Brave-Real-Puppeteer-Core/package.json
+          cat dist/Brave-Real-Puppeteer-Core/package.json || type dist\Brave-Real-Puppeteer-Core\package.json
           
       - name: 📤 Upload Puppeteer Artifact
         uses: actions/upload-artifact@v4
@@ -216,9 +216,9 @@ jobs:
         
       - name: 📋 Validate Package
         run: |
-          ls -la dist/
+          ls -la dist/ || dir dist\*
           echo "🦁 Brave-Real-Playwright-Core Package Info:"
-          cat dist/Brave-Real-Playwright-Core/package.json
+          cat dist/Brave-Real-Playwright-Core/package.json || type dist\Brave-Real-Playwright-Core\package.json
           
       - name: 📤 Upload Playwright Artifact
         uses: actions/upload-artifact@v4
@@ -265,14 +265,14 @@ jobs:
       - name: 📋 Verify Packages
         run: |
           echo "=== Brave Puppeteer Package ==="
-          ls -la dist/Brave-Real-Puppeteer-Core/
+          ls -la dist/Brave-Real-Puppeteer-Core/ || dir dist\Brave-Real-Puppeteer-Core\*
           echo "Package.json content:"
-          cat dist/Brave-Real-Puppeteer-Core/package.json | jq .
+          cat dist/Brave-Real-Puppeteer-Core/package.json | jq . || type dist\Brave-Real-Puppeteer-Core\package.json
           echo ""
           echo "=== Brave Playwright Package ==="
-          ls -la dist/Brave-Real-Playwright-Core/
+          ls -la dist/Brave-Real-Playwright-Core/ || dir dist\Brave-Real-Playwright-Core\*
           echo "Package.json content:"
-          cat dist/Brave-Real-Playwright-Core/package.json | jq .
+          cat dist/Brave-Real-Playwright-Core/package.json | jq . || type dist\Brave-Real-Playwright-Core\package.json
           
       - name: 🔍 Check NPM Authentication
         run: npm whoami
