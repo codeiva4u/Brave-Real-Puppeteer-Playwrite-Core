@@ -18,13 +18,14 @@ const projectRoot = resolve(__dirname, '..');
 
 // Parse command line arguments
 const argv = yargs(hideBin(process.argv))
+    .version(false) // Disable version to avoid reserved word warning
     .option('engine', {
         alias: 'e',
         describe: 'Engine to create brave package for',
         choices: ['puppeteer', 'playwright', 'both'],
         default: 'both'
     })
-    .option('version', {
+    .option('brave-version', {
         alias: 'v',
         describe: 'Version for brave package',
         type: 'string'
@@ -48,9 +49,29 @@ class BravePackageCreator {
         
         this.puppeteerVersion = packageJson.optionalDependencies?.['puppeteer-core']?.replace('^', '') || '24.19.0';
         this.playwrightVersion = packageJson.optionalDependencies?.['playwright-core']?.replace('^', '') || '1.55.0';
-        this.braveVersion = options.version || '1.0.0';
+        
+        // Auto-generate brave version if not provided
+        this.braveVersion = options.braveVersion || options.version || this.generateBraveVersion();
         
         console.log(`📊 Using versions: Puppeteer ${this.puppeteerVersion}, Playwright ${this.playwrightVersion}`);
+        console.log(`🦁 Brave version: ${this.braveVersion}`);
+    }
+
+    /**
+     * Generate automatic brave version based on current date and time
+     */
+    generateBraveVersion() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        
+        // Create unique version: YYYY.MM.DD.HHMM
+        const braveVersion = `${year}.${month}.${day}.${hour}${minute}`;
+        console.log(`🔧 Auto-generated brave version: ${braveVersion}`);
+        return braveVersion;
     }
 
     /**
@@ -396,7 +417,8 @@ async function main() {
 
     const creator = new BravePackageCreator({
         output: argv.output,
-        version: argv.version
+        braveVersion: argv['brave-version'],
+        version: argv.version // Keep for backward compatibility
     });
 
     if (argv.engine === 'puppeteer') {
