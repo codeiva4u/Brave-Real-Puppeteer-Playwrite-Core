@@ -8,9 +8,7 @@
 +// REBROWSER STEALTH: Enhanced Playwright anti-detection script
 +const REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT = `
 +(() => {
-+  // Comprehensive stealth features for Playwright
 +  const playwrightStealth = {
-+    // Remove webdriver property completely
 +    removeWebdriver() {
 +      if ('webdriver' in navigator) {
 +        delete navigator.webdriver;
@@ -23,7 +21,6 @@
 +      });
 +    },
 +    
-+    // Enhanced user agent spoofing for Playwright
 +    spoofUserAgent() {
 +      const realisticUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.81 Safari/537.36';
 +      
@@ -40,266 +37,73 @@
 +      });
 +    },
 +    
-+    // Enhanced userAgentData with proper brands for Playwright
-+    spoofUserAgentData() {
-+      Object.defineProperty(navigator, 'userAgentData', {
-+        get: () => ({
-+          brands: [
-+            { brand: 'Not_A Brand', version: '8' },
-+            { brand: 'Chromium', version: '140' },
-+            { brand: 'Google Chrome', version: '140' }
-+          ],
-+          mobile: false,
-+          platform: 'Windows',
-+          getHighEntropyValues: function(hints) {
-+            return Promise.resolve({
-+              architecture: 'x86',
-+              bitness: '64',
-+              brands: this.brands,
-+              fullVersionList: [
-+                { brand: 'Not_A Brand', version: '8.0.0.0' },
-+                { brand: 'Chromium', version: '140.0.7339.81' },
-+                { brand: 'Google Chrome', version: '140.0.7339.81' }
-+              ],
-+              mobile: false,
-+              model: '',
-+              platform: 'Windows',
-+              platformVersion: '10.0.0',
-+              uaFullVersion: '140.0.7339.81'
-+            });
-+          }
-+        }),
-+        configurable: true,
-+        enumerable: false
-+      });
-+    },
-+    
-+    // Realistic plugins simulation for Playwright
-+    spoofPlugins() {
-+      const realisticPlugins = [
-+        { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
-+        { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' },
-+        { name: 'Native Client', filename: 'internal-nacl-plugin', description: '' }
-+      ];
-+      
-+      Object.defineProperty(navigator, 'plugins', {
-+        get: () => realisticPlugins,
-+        configurable: true,
-+        enumerable: false
-+      });
-+    },
-+    
-+    // Language spoofing
-+    spoofLanguages() {
-+      Object.defineProperty(navigator, 'languages', {
-+        get: () => ['en-US', 'en'],
-+        configurable: true,
-+        enumerable: false
-+      });
-+      
-+      Object.defineProperty(navigator, 'language', {
-+        get: () => 'en-US',
-+        configurable: true,
-+        enumerable: false
-+      });
-+    },
-+    
-+    // Remove chrome automation indicators
-+    cleanChrome() {
-+      if (window.chrome) {
-+        if (window.chrome.runtime) delete window.chrome.runtime;
-+        if (window.chrome.loadTimes) delete window.chrome.loadTimes;
-+        if (window.chrome.csi) delete window.chrome.csi;
-+      }
-+    },
-+    
-+    // Remove Playwright-specific automation indicators
-+    removePlaywrightIndicators() {
-+      const indicators = [
-+        '__playwright__', 'playwright', '__pwInitScript',
-+        '_phantom', '__nightmare', 'callPhantom', '_selenium',
-+        '__selenium_unwrapped', '__puppeteer__', 'puppeteer',
-+        'webdriver'
-+      ];
-+      
-+      indicators.forEach(indicator => {
-+        if (window[indicator]) delete window[indicator];
-+      });
-+      
-+      // Remove Playwright-specific properties
-+      if (window.navigator && window.navigator.constructor) {
-+        delete window.navigator.constructor.webdriver;
-+      }
-+    },
-+    
-+    // Screen spoofing
-+    spoofScreen() {
-+      Object.defineProperty(screen, 'width', { get: () => 1920, configurable: true });
-+      Object.defineProperty(screen, 'height', { get: () => 1080, configurable: true });
-+      Object.defineProperty(screen, 'availWidth', { get: () => 1920, configurable: true });
-+      Object.defineProperty(screen, 'availHeight', { get: () => 1040, configurable: true });
-+      Object.defineProperty(screen, 'colorDepth', { get: () => 24, configurable: true });
-+      Object.defineProperty(screen, 'pixelDepth', { get: () => 24, configurable: true });
-+    },
-+    
-+    // Permission API spoofing
-+    spoofPermissions() {
-+      if (navigator.permissions && navigator.permissions.query) {
-+        const originalQuery = navigator.permissions.query;
-+        navigator.permissions.query = function(parameters) {
-+          if (parameters.name === 'notifications') {
-+            return Promise.resolve({ state: 'default' });
-+          }
-+          return originalQuery.apply(this, arguments);
-+        };
-+      }
-+    },
-+    
-+    // WebGL fingerprint spoofing for Playwright
-+    spoofWebGL() {
-+      const getContext = HTMLCanvasElement.prototype.getContext;
-+      HTMLCanvasElement.prototype.getContext = function(contextType, contextAttributes) {
-+        const context = getContext.apply(this, arguments);
-+        
-+        if (contextType === 'webgl' || contextType === 'experimental-webgl') {
-+          const getParameter = context.getParameter;
-+          context.getParameter = function(parameter) {
-+            // Spoof common WebGL fingerprinting parameters
-+            if (parameter === 7937) return 'Intel Inc.'; // VENDOR
-+            if (parameter === 7938) return 'Intel(R) HD Graphics 620'; // RENDERER
-+            return getParameter.apply(this, arguments);
-+          };
-+        }
-+        
-+        return context;
-+      };
-+    },
-+    
-+    // Hide property enumeration for Playwright
-+    hidePropertyEnumeration() {
-+      const originalGetOwnPropertyNames = Object.getOwnPropertyNames;
-+      Object.getOwnPropertyNames = function(obj) {
-+        const props = originalGetOwnPropertyNames.call(this, obj);
-+        if (obj === navigator) {
-+          return props.filter(prop => !['webdriver', 'userAgent', 'userAgentData', 'plugins', 'languages', 'language'].includes(prop));
-+        }
-+        return props;
-+      };
-+      
-+      const originalGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-+      Object.getOwnPropertyDescriptor = function(obj, prop) {
-+        const descriptor = originalGetOwnPropertyDescriptor.call(this, obj, prop);
-+        if (obj === navigator && ['webdriver', 'userAgent', 'userAgentData', 'plugins', 'languages', 'language'].includes(prop)) {
-+          return undefined;
-+        }
-+        return descriptor;
-+      };
-+    },
-+    
-+    // Playwright-specific iframe detection bypass
-+    bypassIframeDetection() {
-+      // Override iframe detection commonly used by anti-bot systems
-+      Object.defineProperty(window, 'top', {
-+        get: () => window,
-+        configurable: true
-+      });
-+      
-+      Object.defineProperty(window, 'parent', {
-+        get: () => window,
-+        configurable: true
-+      });
-+      
-+      Object.defineProperty(window, 'frameElement', {
-+        get: () => null,
-+        configurable: true
-+      });
-+    },
-+    
-+    // Mouse and keyboard event spoofing
-+    spoofEvents() {
-+      // Add realistic mouse movement simulation
-+      let mouseX = Math.floor(Math.random() * 1920);
-+      let mouseY = Math.floor(Math.random() * 1080);
-+      
-+      const originalAddEventListener = EventTarget.prototype.addEventListener;
-+      EventTarget.prototype.addEventListener = function(type, listener, options) {
-+        if (type === 'mousemove') {
-+          // Simulate realistic mouse movement
-+          setTimeout(() => {
-+            mouseX += Math.floor(Math.random() * 10) - 5;
-+            mouseY += Math.floor(Math.random() * 10) - 5;
-+            mouseX = Math.max(0, Math.min(1920, mouseX));
-+            mouseY = Math.max(0, Math.min(1080, mouseY));
-+          }, Math.random() * 100);
-+        }
-+        return originalAddEventListener.call(this, type, listener, options);
-+      };
++    init() {
++      this.removeWebdriver();
++      this.spoofUserAgent();
 +    }
 +  };
 +  
-+  // Apply all Playwright stealth features
-+  playwrightStealth.removeWebdriver();
-+  playwrightStealth.spoofUserAgent();
-+  playwrightStealth.spoofUserAgentData();
-+  playwrightStealth.spoofPlugins();
-+  playwrightStealth.spoofLanguages();
-+  playwrightStealth.cleanChrome();
-+  playwrightStealth.removePlaywrightIndicators();
-+  playwrightStealth.spoofScreen();
-+  playwrightStealth.spoofPermissions();
-+  playwrightStealth.spoofWebGL();
-+  playwrightStealth.hidePropertyEnumeration();
-+  playwrightStealth.bypassIframeDetection();
-+  playwrightStealth.spoofEvents();
-+  
-+  // Set ready flag for Playwright
-+  window.__rebrowser_playwright_stealth_ready__ = true;
++  playwrightStealth.init();
 +})();
 +`;
- 
- import { isUnderTest } from '../../utils';
++
+ import { EventEmitter } from 'events';
  import type * as channels from '@protocol/channels';
-@@ -128,6 +370,18 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
-     }
+ import { serializeError } from '../errors';
+@@ -37,6 +37,15 @@
+     this._sessionId = sessionId;
    }
  
-+  // REBROWSER STEALTH: Enhanced evaluation with Playwright stealth script injection
-+  async evaluateWithPlaywrightStealth(expression: string, isFunction?: boolean, returnByValue?: boolean, arg?: any): Promise<any> {
-+    // Inject stealth script first
-+    try {
-+      await this._session.send('Runtime.evaluate', {
-+        expression: REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT,
-+        contextId: this._contextId,
-+      });
-+    } catch (error) {
-+      // Silently fail to maintain stealth
-+    }
-+    
-+    return this.rawEvaluateJSON(expression, isFunction, returnByValue, arg);
++  // rebrowser-stealth: get stealth script for injection
++  __re__getStealthScript(): string {
++    return REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT;
 +  }
 +
-   async rawEvaluateHandle(expression: string): Promise<ObjectId> {
-     try {
-       const response = await this._session.send('Runtime.evaluate', {
-@@ -177,6 +431,21 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
-       throw error;
-     }
++  // rebrowser-stealth: inject stealth script
++  async injectStealthScript(): Promise<void> {
++    await this.evaluate(false /* returnByValue */, this.__re__getStealthScript(), false /* isFunction */, undefined, 'main');
++  }
++
+   async rawEvaluateJSON(expression: string): Promise<any> {
+     const { exceptionDetails, result: remoteObject } = await this._session.send('Runtime.evaluate', {
+       expression,
+--- a/packages/playwright-core/src/server/chromium/crPage.ts
++++ b/packages/playwright-core/src/server/chromium/crPage.ts
+@@ -125,6 +125,16 @@
+     this._page._frameManager.frameAttached(frameId, parentFrameId);
    }
-+  
-+  // REBROWSER STEALTH: Auto-inject Playwright stealth script on context creation
-+  async injectPlaywrightStealthScript(): Promise<void> {
-+    try {
-+      await this._session.send('Runtime.evaluate', {
-+        expression: REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT,
-+        contextId: this._contextId,
-+        returnByValue: false,
-+        awaitPromise: false,
-+        userGesture: false
-+      });
-+    } catch (error) {
-+      // Silently fail to maintain stealth
+ 
++  // rebrowser-stealth: inject stealth on new frames  
++  async _injectStealthOnFrame(frameId: string): Promise<void> {
++    if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
++      try {
++        const context = await this._page._frameManager.frame(frameId)?.evaluateExpression(REBROWSER_PLAYWRIGHT_STEALTH_SCRIPT, false, undefined, 'main');
++      } catch (e) {
++        // Ignore stealth injection errors
++      }
 +    }
 +  }
++
+   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
+     this._page._frameManager.frameCommitted(framePayload.id, framePayload.url, framePayload.name || '', framePayload.urlFragment, initial);
+   }
+--- a/packages/playwright-core/src/server/frames.ts
++++ b/packages/playwright-core/src/server/frames.ts
+@@ -234,6 +234,16 @@
+     return context;
+   }
  
-   async evaluateExpression(expression: string, isFunction: boolean | undefined, returnByValue: boolean, arg: any): Promise<any> {
-     const { exceptionDetails, result: remoteObject } = await this._session.send('Runtime.callFunctionOn', {
++  // rebrowser-stealth: inject stealth script after context creation
++  async _injectStealthAfterContext(context: any): Promise<void> {
++    if (process.env["REBROWSER_STEALTH_MODE"] !== "0") {
++      try {
++        await context.injectStealthScript();
++      } catch (e) {
++        // Ignore stealth injection errors
++      }
++    }
++  }
++
+   async _contextDestroyed(executionContextId: number) {
+     const context = this._contextIdToContext.get(executionContextId);
+     if (!context)
