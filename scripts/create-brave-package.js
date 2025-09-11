@@ -103,6 +103,13 @@ class BravePackageCreator {
         console.log('📁 Copying patched files...');
         cpSync(puppeteerPath, packageDir, { recursive: true });
 
+        // Get actual dependencies from installed puppeteer-core
+        const originalPackageJsonPath = join(puppeteerPath, 'package.json');
+        const originalPackageJson = JSON.parse(readFileSync(originalPackageJsonPath, 'utf8'));
+        const actualDependencies = originalPackageJson.dependencies || {};
+        
+        console.log('📆 Using actual dependencies from puppeteer-core:', Object.keys(actualDependencies).join(', '));
+
         // Create brave-specific package.json
         const bravePackageJson = {
             name: packageName,
@@ -131,13 +138,7 @@ class BravePackageCreator {
                 url: "https://rebrowser.net"
             },
             license: "MIT",
-            dependencies: {
-                "@puppeteer/browsers": "^2.5.0",
-                "chromium-bidi": "^0.8.0",
-                "debug": "^4.3.7",
-                "devtools-protocol": "^0.0.1410825",
-                "ws": "^8.18.0"
-            },
+            dependencies: actualDependencies,
             optionalDependencies: {},
             peerDependencies: {},
             files: [
