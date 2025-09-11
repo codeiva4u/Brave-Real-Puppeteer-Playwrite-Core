@@ -100,6 +100,8 @@
     "clean": "node ./scripts/clean-project.js",
     "validate": "node ./scripts/validate-patches.js",
     "setup": "node ./scripts/setup-wizard.js",
+    "check-versions": "node ./scripts/check-versions.js",
+    "check-versions-only": "node ./scripts/check-versions.js --check-only",
     "test": "node ./test.js --engine=puppeteer --keepOpen"
   },
   "dependencies": {
@@ -107,12 +109,9 @@
   },
   "optionalDependencies": {
     "playwright-core": "^1.55.0",
-    "puppeteer-core": "^24.19.0"
+    "puppeteer-core": "^24.20.0"
   },
   "devDependencies": {
     "test": "^3.3.0"
-  },
-  "peerDependencies": {
-    "puppeteer-core": ">=20.0.0"
   }
 }

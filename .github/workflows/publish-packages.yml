@@ -6,6 +6,9 @@ on:
     tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    # Weekly check every Sunday at 00:00 UTC (हफ्ते में एक बार चेक)
+    - cron: '0 0 * * 0'
   workflow_dispatch:
     inputs:
       publish_type:
@@ -22,11 +25,91 @@ on:
         required: false
         default: false
         type: boolean
+      force_update:
+        description: 'Force version update check (मैनुअल अपडेट)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
+  # Job: Check for version updates (नए वर्जन की जांच)
+  check-versions:
+    name: 🔍 Check Package Versions
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' || 
+      (github.event_name == 'workflow_dispatch' && inputs.force_update) ||
+      github.event_name == 'push'
+    
+    outputs:
+      has_updates: ${{ steps.version_check.outputs.has_updates }}
+      puppeteer_current: ${{ steps.version_check.outputs.puppeteer_current }}
+      puppeteer_latest: ${{ steps.version_check.outputs.puppeteer_latest }}
+      playwright_current: ${{ steps.version_check.outputs.playwright_current }}
+      playwright_latest: ${{ steps.version_check.outputs.playwright_latest }}
+      should_publish: ${{ steps.decision.outputs.should_publish }}
+      
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN || github.token }}
+          fetch-depth: 0
+          
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 🔧 Install Dependencies
+        run: npm ci
+        
+      - name: 🔍 Check for Version Updates
+        id: version_check
+        run: |
+          echo "🔍 Running version checker..."
+          node ./scripts/check-versions.js
+        continue-on-error: true
+        
+      - name: 🧠 Make Publishing Decision
+        id: decision
+        run: |
+          HAS_UPDATES="${{ steps.version_check.outputs.has_updates }}"
+          EVENT_NAME="${{ github.event_name }}"
+          FORCE_UPDATE="${{ inputs.force_update }}"
+          
+          echo "📊 Decision Variables:"
+          echo "   Has Updates: $HAS_UPDATES"
+          echo "   Event: $EVENT_NAME"
+          echo "   Force Update: $FORCE_UPDATE"
+          
+          # Decide whether to proceed with publishing
+          if [[ "$HAS_UPDATES" == "true" ]] || [[ "$FORCE_UPDATE" == "true" ]] || [[ "$EVENT_NAME" == "push" ]]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "✅ पब्लिशिंग के लिए आगे बढ़ेंगे (Will proceed with publishing)"
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ कोई अपडेट नहीं मिला, पब्लिशिंग स्किप करेंगे (No updates found, skipping publishing)"
+          fi
+          
+      - name: 📤 Commit Updated Versions
+        if: steps.version_check.outputs.has_updates == 'true'
+        run: |
+          git config user.name "GitHub Actions - Auto Update"
+          git config user.email "actions@github.com"
+          
+          git add package.json
+          git commit -m "🎆 Auto-update: Puppeteer v${{ steps.version_check.outputs.puppeteer_latest }}, Playwright v${{ steps.version_check.outputs.playwright_latest }}"
+          git push
+          
+          echo "✅ Versions updated and committed to repository"
+
   test:
     name: 🧪 Test Cross-Platform
     runs-on: ${{ matrix.os }}
+    needs: check-versions
+    if: needs.check-versions.outputs.should_publish == 'true'
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -73,7 +156,8 @@ jobs:
   generate-version:
     name: 🏷️ Generate Version & Tags
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: check-versions
+    if: needs.check-versions.outputs.should_publish == 'true'
     
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -140,8 +224,8 @@ jobs:
   build-puppeteer:
     name: 🎭 Build Puppeteer Package
     runs-on: ubuntu-latest
-    needs: [test, generate-version]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: [test, generate-version, check-versions]
+    if: needs.check-versions.outputs.should_publish == 'true'
     
     steps:
       - name: 📥 Checkout Repository
@@ -160,7 +244,10 @@ jobs:
         run: npm ci
         
       - name: 🎭 Install Puppeteer
-        run: npm install puppeteer-core@24.19.0
+        run: |
+          PUPPETEER_VERSION="${{ needs.check-versions.outputs.puppeteer_latest }}"
+          echo "🎭 Installing Puppeteer v$PUPPETEER_VERSION"
+          npm install puppeteer-core@$PUPPETEER_VERSION
         
       - name: 🔨 Apply Puppeteer Patches
         run: npm run patch-puppeteer
@@ -187,8 +274,8 @@ jobs:
   build-playwright:
     name: 🎪 Build Playwright Package
     runs-on: ubuntu-latest
-    needs: [test, generate-version]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: [test, generate-version, check-versions]
+    if: needs.check-versions.outputs.should_publish == 'true'
     
     steps:
       - name: 📥 Checkout Repository
@@ -207,7 +294,10 @@ jobs:
         run: npm ci
         
       - name: 🎪 Install Playwright
-        run: npm install playwright-core@1.55.0
+        run: |
+          PLAYWRIGHT_VERSION="${{ needs.check-versions.outputs.playwright_latest }}"
+          echo "🎪 Installing Playwright v$PLAYWRIGHT_VERSION"
+          npm install playwright-core@$PLAYWRIGHT_VERSION
         
       - name: 🔨 Apply Playwright Patches
         run: npm run patch-playwright
@@ -234,10 +324,13 @@ jobs:
   publish:
     name: 🚀 Publish to NPM
     runs-on: ubuntu-latest
-    needs: [build-puppeteer, build-playwright, generate-version]
+    needs: [build-puppeteer, build-playwright, generate-version, check-versions]
     if: |
-      (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
-      (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+      needs.check-versions.outputs.should_publish == 'true' && (
+        (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
+        (github.event_name == 'workflow_dispatch' && !inputs.dry_run) ||
+        github.event_name == 'schedule'
+      )
     environment: production
     
     steps:
@@ -345,7 +438,7 @@ jobs:
   dry-run:
     name: 🧪 Dry Run Publish
     runs-on: ubuntu-latest
-    needs: [build-puppeteer, build-playwright, generate-version]
+    needs: [build-puppeteer, build-playwright, generate-version, check-versions]
     if: |
       (github.event_name == 'workflow_dispatch' && inputs.dry_run) ||
       github.event_name == 'pull_request'
