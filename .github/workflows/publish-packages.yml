@@ -4,8 +4,26 @@ on:
   push:
     branches: [ main, master ]
     tags: [ 'v*' ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/**'
+      - 'patches/**'
+      - '.github/workflows/**'
+      - '!README.md'
+      - '!*.md'
+      - '!docs/**'
   pull_request:
     branches: [ main, master ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/**'
+      - 'patches/**'
+      - '.github/workflows/**'
+      - '!README.md'
+      - '!*.md'
+      - '!docs/**'
   schedule:
     # Weekly check every Sunday at 00:00 UTC (हफ्ते में एक बार चेक)
     - cron: '0 0 * * 0'
@@ -39,7 +57,7 @@ jobs:
     if: |
       github.event_name == 'schedule' || 
       (github.event_name == 'workflow_dispatch' && inputs.force_update) ||
-      github.event_name == 'push'
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-workflow]'))
     
     outputs:
       has_updates: ${{ steps.version_check.outputs.has_updates }}
