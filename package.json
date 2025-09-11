@@ -63,8 +63,8 @@
   "scripts": {
     "start": "node ./scripts/patcher.js",
     "patch": "node ./scripts/patcher.js patch",
-    "patch-puppeteer": "node ./scripts/patcher.js patch-all --packageName=puppeteer-core",
-    "patch-playwright": "node ./scripts/patcher.js patch-all --packageName=playwright-core",
+    "patch-puppeteer": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=puppeteer-core",
+    "patch-playwright": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=playwright-core",
     "patch-both": "npm run patch-puppeteer && npm run patch-playwright",
     "setup-puppeteer": "npm install puppeteer-core && npm run patch-puppeteer && echo 🎭 Puppeteer-core setup completed with stealth patches!",
     "setup-playwright": "npm install playwright-core && npm run patch-playwright && echo 🎪 Playwright-core setup completed with stealth patches!",
