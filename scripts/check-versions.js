@@ -158,20 +158,20 @@ class VersionChecker {
         // Check for updates
         this.checkForUpdates();
         
-        // Update package.json if needed
-        const updated = this.updatePackageJson();
+        // Update package.json if needed (skip if --check-only)
+        const updated = checkOnly ? false : this.updatePackageJson();
         
         // Set GitHub Actions outputs
         this.setGitHubOutput();
         
         // Exit with appropriate code
         if (this.hasUpdates) {
-            console.log('🎉 Updates were found and applied!');
-            console.log('   Next steps: Install new packages and apply patches');
+            console.log('🎉 Updates were found!');
+            console.log(checkOnly ? '   (Check-only mode: no changes applied)' : '   Next steps: Install new packages and apply patches');
             process.exit(0); // Success with updates
         } else {
             console.log('✅ All packages are up to date!');
-            process.exit(1); // No updates needed (will skip workflow steps)
+            process.exit(0); // Success - no updates needed
         }
     }
 }
