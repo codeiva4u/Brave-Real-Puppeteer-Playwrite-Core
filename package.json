@@ -48,7 +48,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rebrowser/rebrowser-patches"
+    "url": "git+https://github.com/rebrowser/rebrowser-patches.git"
   },
   "bugs": {
     "url": "https://github.com/rebrowser/rebrowser-patches/issues"
@@ -60,12 +60,12 @@
   "homepage": "https://rebrowser.net",
   "main": "scripts/patcher.js",
   "bin": {
-    "brave-stealth": "./scripts/patcher.js",
-    "brave-patches": "./scripts/patcher.js",
-    "brave-enhanced": "./scripts/patcher.js",
-    "rebrowser-stealth": "./scripts/patcher.js",
-    "rebrowser-patches": "./scripts/patcher.js",
-    "rebrowser-enhanced": "./scripts/patcher.js"
+    "brave-stealth": "scripts/patcher.js",
+    "brave-patches": "scripts/patcher.js",
+    "brave-enhanced": "scripts/patcher.js",
+    "rebrowser-stealth": "scripts/patcher.js",
+    "rebrowser-patches": "scripts/patcher.js",
+    "rebrowser-enhanced": "scripts/patcher.js"
   },
   "license": "MIT",
   "type": "module",
@@ -100,7 +100,7 @@
     "setup-ultimate": "npm install puppeteer-core playwright-core && npm run patch-both && npm run test-bot-detector && npm run test-bot-detector-mobile && echo 🔥 Ultimate setup with all features completed!",
     "help": "echo 🎆 BRAVE STEALTH COMMANDS: && echo 🚀 Quick Setup: npm run setup-both && echo 🎨 Individual: npm run patch-puppeteer / patch-playwright && echo 🤖 AI Testing: npm run ai-agent && echo 🤾 Bot Testing: npm run test-bot-detector && echo 📊 Versions: npm run version-sync && echo 🔧 Fix Versions: npm run version-sync-fix",
     "features": "echo 🚫️ 50+ STEALTH FEATURES: Navigator, Canvas, WebGL, Performance, Human Behavior && echo 🤖 AI FEATURES: Intelligence Testing, Auto Analysis, Smart Cleanup && echo 🦁 BRAVE FEATURES: Auto-Detection, Optimized Launch, Privacy Protection",
-    "test-workflow": "echo 🧪 WORKFLOW TEST INSTRUCTIONS: && echo 1. Go to GitHub Actions tab && echo 2. Select 'Free Tier NPM Publish' && echo 3. Click 'Run workflow' && echo 4. Set test_mode: true && echo 5. Click 'Run workflow' button && echo 🚀 This will test the complete publishing workflow!"
+    "test-workflow": "echo 🧪 WORKFLOW TEST INSTRUCTIONS: && echo === OPTION 1: Free Tier Workflow === && echo 1. Go to GitHub Actions tab && echo 2. Select 'Free Tier NPM Publish' && echo 3. Click 'Run workflow' && echo 4. Set test_mode: true && echo 5. Choose version_bump: brave-timestamp && echo 6. Click 'Run workflow' button && echo === OPTION 2: Full Auto Workflow === && echo 1. Select '🦁 Brave NPM Auto-Publish' && echo 2. Set test_mode: true && echo 3. Click 'Run workflow' && echo 🚀 Both will test complete publishing workflow!"
   },
   "dependencies": {
     "yargs": "^17.7.2"

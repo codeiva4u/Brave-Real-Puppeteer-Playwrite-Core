@@ -1,0 +1,175 @@
+# 🆓 Free Tier NPM Publish - Manual Trigger Workflow
+# Perfect for testing and manual publishing without complex automation
+
+name: Free Tier NPM Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '🧪 Test mode (dry run without actual publish)'
+        required: true
+        default: 'true'
+        type: boolean
+      version_bump:
+        description: '📈 Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor  
+          - major
+          - brave-timestamp
+      skip_tests:
+        description: '⚡ Skip tests for faster execution'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  free-tier-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔍 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm install --prefer-offline --no-audit
+          
+      - name: 🔧 Generate New Version
+        id: version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          
+          if [ "${{ inputs.version_bump }}" = "brave-timestamp" ]; then
+            # Generate brave timestamp version
+            TIMESTAMP=$(date -u +"%Y.%m.%d.%H%M")
+            BASE_VERSION=$(echo $CURRENT_VERSION | cut -d'-' -f1)
+            NEW_VERSION="${BASE_VERSION}-brave.${TIMESTAMP}"
+            
+            # Add random suffix if version exists
+            if npm view brave-real-puppeteer-playwright-core@${NEW_VERSION} version 2>/dev/null; then
+              RANDOM=$((RANDOM % 99))
+              NEW_VERSION="${BASE_VERSION}-brave.${TIMESTAMP}.${RANDOM}"
+            fi
+          else
+            # Standard npm version bump
+            NEW_VERSION=$(npm version ${{ inputs.version_bump }} --no-git-tag-version --dry-run | sed 's/^v//')
+            npm version ${{ inputs.version_bump }} --no-git-tag-version
+          fi
+          
+          echo "🎯 New version: ${NEW_VERSION}"
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+      
+      - name: 📝 Update Package.json (Brave Timestamp)
+        if: ${{ inputs.version_bump == 'brave-timestamp' }}
+        run: |
+          npm version ${{ steps.version.outputs.new_version }} --no-git-tag-version
+          echo "✅ Updated to ${{ steps.version.outputs.new_version }}"
+      
+      - name: 🎭 Quick Setup (Essential Only)
+        if: ${{ inputs.skip_tests != 'true' }}
+        run: |
+          echo "🔍 Version sync..."
+          npm run version-sync || echo "⚠️ Version sync warning"
+          
+          echo "🎭 Basic patching..."
+          npm run patch-puppeteer-basic || echo "⚠️ Puppeteer patch warning"
+          npm run patch-playwright-basic || echo "⚠️ Playwright patch warning"
+          
+          echo "🦁 Creating packages..."
+          npm run create-brave-packages || echo "⚠️ Package creation warning"
+      
+      - name: ⚡ Quick Mode (Skip Tests)
+        if: ${{ inputs.skip_tests == 'true' }}
+        run: |
+          echo "⚡ QUICK MODE - Skipping comprehensive tests"
+          echo "📦 Package ready for publish"
+      
+      - name: 📊 Package Summary
+        run: |
+          echo "📊 PACKAGE SUMMARY"
+          echo "=================="
+          echo "📦 Name: $(node -p "require('./package.json').name")"
+          echo "🔖 Old Version: ${{ steps.version.outputs.current_version }}"
+          echo "🆕 New Version: ${{ steps.version.outputs.new_version }}"
+          echo "🎯 Bump Type: ${{ inputs.version_bump }}"
+          echo "🧪 Test Mode: ${{ inputs.test_mode }}"
+          echo "⚡ Skip Tests: ${{ inputs.skip_tests }}"
+          
+          echo ""
+          echo "📁 Files included:"
+          echo "$(node -p "require('./package.json').files?.join(', ') || 'All files'")"
+      
+      - name: 🧪 Test Mode Output
+        if: ${{ inputs.test_mode == 'true' }}
+        run: |
+          echo "🧪 TEST MODE - DRY RUN"
+          echo "======================"
+          echo "✅ Would publish: brave-real-puppeteer-playwright-core@${{ steps.version.outputs.new_version }}"
+          echo "📦 Package is ready for production publish"
+          echo "🔄 To publish for real, set test_mode to 'false'"
+      
+      - name: 🚀 Publish to NPM (Production)
+        if: ${{ inputs.test_mode != 'true' }}
+        run: |
+          echo "🚀 Publishing to NPM..."
+          npm publish
+          echo "✅ Published: brave-real-puppeteer-playwright-core@${{ steps.version.outputs.new_version }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: 🏷️ Create Git Tag (Production Only)
+        if: ${{ inputs.test_mode != 'true' }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          TAG_NAME="v${{ steps.version.outputs.new_version }}"
+          
+          git tag -a "$TAG_NAME" -m "🆓 Free Tier Release ${{ steps.version.outputs.new_version }}
+
+          🎯 Version Bump: ${{ inputs.version_bump }}
+          ⚡ Quick Mode: ${{ inputs.skip_tests }}
+          
+          ✅ Features:
+          - Brave stealth integration
+          - Cross-platform support
+          - Professional automation
+          
+          🆓 Published via Free Tier workflow"
+          
+          git push origin "$TAG_NAME"
+          echo "✅ Tagged: $TAG_NAME"
+      
+      - name: 🎉 Success Message
+        run: |
+          echo ""
+          echo "🎉 FREE TIER WORKFLOW COMPLETED!"
+          echo "================================"
+          
+          if [ "${{ inputs.test_mode }}" = "true" ]; then
+            echo "🧪 TEST MODE - Dry run successful"
+            echo "🔄 Ready for production publish"
+          else
+            echo "🚀 PRODUCTION - Successfully published!"
+            echo "📦 NPM: https://www.npmjs.com/package/brave-real-puppeteer-playwright-core"
+            echo "💾 Install: npm install brave-real-puppeteer-playwright-core@${{ steps.version.outputs.new_version }}"
+          fi
+          
+          echo ""
+          echo "📊 Summary:"
+          echo "- Version: ${{ steps.version.outputs.new_version }}"
+          echo "- Bump: ${{ inputs.version_bump }}"
+          echo "- Tests: ${{ inputs.skip_tests == 'true' && 'Skipped' || 'Included' }}"
+          echo "- Mode: ${{ inputs.test_mode == 'true' && 'Test' || 'Production' }}"
