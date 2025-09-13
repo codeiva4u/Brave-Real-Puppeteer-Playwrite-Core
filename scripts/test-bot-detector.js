@@ -47,13 +47,17 @@ async function runBotDetectorTest(options = {}) {
     const { 
         headless = true,
         mobile = false,
-        brave = true 
+        brave = true,
+        forceEngine = null
     } = options;
     
     console.log('🛡️ Starting Advanced Stealth Bot Detection Test...');
     console.log(`📱 Mobile: ${mobile ? 'YES' : 'NO'}`);
     console.log(`🎭 Headless: ${headless ? 'YES' : 'NO'}`);
-    console.log(`🦁 Brave Browser: ${brave ? 'YES (preferred)' : 'NO (Chrome fallback)'}`);
+    console.log(`🦁 Brave Browser: ${brave ? 'YES (preferred)' : 'NO (Chrome fallback)}`);
+    if (forceEngine) {
+        console.log(`🤖 AI Agent Engine: ${forceEngine.toUpperCase()} (forced via FORCE_ENGINE)`);
+    }
     
     // Set mobile simulation environment variable if needed
     if (mobile) {
@@ -926,7 +930,8 @@ const options = {
     // - true when running via other commands (headless by default)
     headless: isTestBotDetectorNpmScript ? false : true,
     mobile: args.includes('--mobile'),
-    brave: !args.includes('--no-brave')
+    brave: !args.includes('--no-brave'),
+    forceEngine: process.env.FORCE_ENGINE || null
 };
 
 // Allow command line flags to override defaults
