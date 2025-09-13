@@ -554,8 +554,12 @@ class AITestAgent {
 }
 
 // Main execution
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
-                     process.argv[1].endsWith('ai-test-agent.js');
+// For ES modules, check if this script was called directly
+const scriptPath = new URL(import.meta.url).pathname;
+const isMainModule = process.argv[1] && (
+    process.argv[1].endsWith('ai-agent.js') || 
+    process.argv[1].includes('ai-agent.js')
+);
 
 if (isMainModule) {
     console.log('🚀 Starting AI Test Agent...');
@@ -564,6 +568,16 @@ if (isMainModule) {
         console.error('🚨 AI Agent failed:', error);
         process.exit(1);
     });
+} else {
+    // If not main module, still run for npm scripts
+    if (process.env.npm_lifecycle_event === 'ai-agent' || process.env.npm_lifecycle_event === 'test') {
+        console.log('🚀 Starting AI Test Agent via npm...');
+        const aiAgent = new AITestAgent();
+        aiAgent.runIntelligentTests().catch(error => {
+            console.error('🚨 AI Agent failed:', error);
+            process.exit(1);
+        });
+    }
 }
 
 export default AITestAgent;
