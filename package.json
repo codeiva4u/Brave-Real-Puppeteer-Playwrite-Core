@@ -100,11 +100,11 @@
     "test-workflow": "echo 🧪 WORKFLOW TEST INSTRUCTIONS: && echo 1. Go to GitHub Actions tab && echo 2. Select 'Free Tier NPM Publish' && echo 3. Click 'Run workflow' && echo 4. Set test_mode: true && echo 5. Click 'Run workflow' button && echo 🚀 This will test the complete publishing workflow!"
   },
   "dependencies": {
+    "puppeteer-core": "^24.20.0",
     "yargs": "^17.7.2"
   },
   "optionalDependencies": {
-    "playwright-core": "^1.55.0",
-    "puppeteer-core": "^24.20.0"
+    "playwright-core": "^1.55.0"
   },
   "devDependencies": {
     "test": "^3.3.0"

@@ -155,18 +155,40 @@ class AITestAgent {
             await this.runCommand('npm install');
         }
         
-        // Auto-detect which engines to setup
+        // Auto-detect which engines to install (simplified approach)
         const puppeteerExists = await this.fileExists('node_modules/puppeteer-core');
         const playwrightExists = await this.fileExists('node_modules/playwright-core');
         
         if (!puppeteerExists) {
-            console.log('🎭 Setting up Puppeteer...');
-            await this.runCommand('npm run setup-puppeteer');
+            console.log('🎭 Installing and Patching Puppeteer Core...');
+            try {
+                await this.runCommand('npm install puppeteer-core');
+                console.log('✅ Puppeteer Core installed successfully');
+                
+                // Now patch it with stealth features
+                console.log('🤖 AI Agent: Applying stealth patches to Puppeteer...');
+                await this.runCommand('node scripts/enhanced-patcher.js patch-comprehensive --packageName=puppeteer-core');
+                console.log('✅ Puppeteer Core patched with stealth features');
+                
+            } catch (error) {
+                console.log('⚠️ Puppeteer Core setup failed:', error.message.split('\n')[0]);
+            }
         }
         
         if (!playwrightExists) {
-            console.log('🎪 Setting up Playwright...');
-            await this.runCommand('npm run setup-playwright');
+            console.log('🎪 Installing and Patching Playwright Core...');
+            try {
+                await this.runCommand('npm install playwright-core');
+                console.log('✅ Playwright Core installed successfully');
+                
+                // Now patch it with stealth features
+                console.log('🤖 AI Agent: Applying stealth patches to Playwright...');
+                await this.runCommand('node scripts/enhanced-patcher.js patch-comprehensive --packageName=playwright-core');
+                console.log('✅ Playwright Core patched with stealth features');
+                
+            } catch (error) {
+                console.log('⚠️ Playwright Core setup failed:', error.message.split('\n')[0]);
+            }
         }
         
         console.log('✅ Auto-build completed');
