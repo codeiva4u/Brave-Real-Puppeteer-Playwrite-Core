@@ -72,12 +72,16 @@
   "scripts": {
     "start": "node ./scripts/patcher.js",
     "patch": "node ./scripts/patcher.js patch",
-    "patch-puppeteer": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=puppeteer-core",
-    "patch-playwright": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=playwright-core",
-    "patch-both": "npm run patch-puppeteer && npm run patch-playwright",
-    "setup-puppeteer": "npm install puppeteer-core && npm run patch-puppeteer && echo 🎭 Puppeteer-core setup completed with stealth patches!",
-    "setup-playwright": "npm install playwright-core && npm run patch-playwright && echo 🎪 Playwright-core setup completed with stealth patches!",
-    "setup-both": "npm install puppeteer-core playwright-core && npm run patch-both && echo 🎯 Both engines setup completed with stealth!",
+    "patch-puppeteer": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=puppeteer-core && npm run create-brave-puppeteer && npm run ai-agent",
+    "patch-playwright": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=playwright-core && npm run create-brave-playwright && npm run ai-agent",
+    "patch-both": "npm run patch-puppeteer-basic && npm run patch-playwright-basic && npm run create-brave-packages && npm run ai-agent && npm run check-versions",
+    "patch-puppeteer-basic": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=puppeteer-core",
+    "patch-playwright-basic": "node ./scripts/enhanced-patcher.js patch-comprehensive --packageName=playwright-core",
+    "setup-puppeteer": "npm install puppeteer-core && npm run patch-puppeteer && npm run test-bot-detector-headless && echo 🎭 Puppeteer-core setup completed with EVERYTHING!",
+    "setup-playwright": "npm install playwright-core && npm run patch-playwright && npm run test-bot-detector-headless && echo 🎪 Playwright-core setup completed with EVERYTHING!",
+    "setup-both": "npm install puppeteer-core playwright-core && npm run patch-both && npm run test-bot-detector-headless && echo 🎯 Both engines setup completed with ALL FEATURES!",
+    "setup-both-basic": "npm install puppeteer-core playwright-core && npm run patch-puppeteer-basic && npm run patch-playwright-basic && echo 🎯 Both engines setup completed with stealth only!",
+    "setup-complete": "npm install puppeteer-core playwright-core && npm run patch-both && npm run ai-agent && npm run test-bot-detector-headless && echo 🚀 Complete setup with stealth + AI + testing completed!",
     "install-puppeteer": "npm install puppeteer-core && npm run patch-puppeteer",
     "install-playwright": "npm install playwright-core && npm run patch-playwright",
     "ai-agent": "node ./scripts/ai-agent.js",
@@ -88,7 +92,11 @@
     "test-bot-detector": "node ./scripts/test-bot-detector.js",
     "test-bot-detector-headless": "node ./scripts/test-bot-detector.js --headless",
     "test-bot-detector-mobile": "node ./scripts/test-bot-detector.js --mobile",
-    "test": "npm run ai-agent"
+    "test": "npm run ai-agent",
+    "setup-ai-enhanced": "npm install puppeteer-core playwright-core && npm run patch-both && npm run create-brave-packages && npm run ai-agent && echo 🤖 AI-Enhanced setup with Brave packages completed!",
+    "setup-ultimate": "npm install puppeteer-core playwright-core && npm run patch-both && npm run test-bot-detector && npm run test-bot-detector-mobile && echo 🔥 Ultimate setup with all features completed!",
+    "help": "echo 🎆 BRAVE STEALTH COMMANDS: && echo 🚀 Quick Setup: npm run setup-both && echo 🎨 Individual: npm run patch-puppeteer / patch-playwright && echo 🤖 AI Testing: npm run ai-agent && echo 🤾 Bot Testing: npm run test-bot-detector && echo 📊 Versions: npm run check-versions",
+    "features": "echo 🛡️ 50+ STEALTH FEATURES: Navigator, Canvas, WebGL, Performance, Human Behavior && echo 🤖 AI FEATURES: Intelligence Testing, Auto Analysis, Smart Cleanup && echo 🦁 BRAVE FEATURES: Auto-Detection, Optimized Launch, Privacy Protection"
   },
   "dependencies": {
     "yargs": "^17.7.2"
