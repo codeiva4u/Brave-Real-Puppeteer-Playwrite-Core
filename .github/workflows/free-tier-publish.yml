@@ -54,60 +54,81 @@ jobs:
           npm ci
           npm install -g semver
 
-      - name: 🔍 Check Package Versions
+      - name: 🔍 Check Package Versions & Generate Tags
         id: version_check
         run: |
-          echo "🔍 Checking for package updates..."
+          echo "🔍 Checking for package updates and generating version tags..."
           
           # Current versions from package.json
           CURRENT_PUPPETEER=$(node -p "require('./package.json').optionalDependencies['puppeteer-core']" | sed 's/\^//')
           CURRENT_PLAYWRIGHT=$(node -p "require('./package.json').optionalDependencies['playwright-core']" | sed 's/\^//')
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
           
           # Latest versions from NPM
           LATEST_PUPPETEER=$(npm view puppeteer-core version)
           LATEST_PLAYWRIGHT=$(npm view playwright-core version)
           
+          echo "📊 Current Package Version: $CURRENT_VERSION"
           echo "📊 Current Puppeteer: $CURRENT_PUPPETEER"
           echo "📊 Latest Puppeteer: $LATEST_PUPPETEER"
           echo "📊 Current Playwright: $CURRENT_PLAYWRIGHT"
           echo "📊 Latest Playwright: $LATEST_PLAYWRIGHT"
+          
+          # Debug inputs
+          echo "🔍 Input parameters:"
+          echo "  force_publish: '${{ github.event.inputs.force_publish }}'"
+          echo "  version_bump: '${{ github.event.inputs.version_bump }}'"
+          echo "  skip_tests: '${{ github.event.inputs.skip_tests }}'"
+          
+          # Generate new version based on updates or manual input
+          VERSION_TYPE="${{ github.event.inputs.version_bump || 'patch' }}"
+          
+          # Auto-determine version bump type based on updates
+          if [ "$CURRENT_PUPPETEER" != "$LATEST_PUPPETEER" ] || [ "$CURRENT_PLAYWRIGHT" != "$LATEST_PLAYWRIGHT" ]; then
+            echo "🔄 Dependencies updated - using minor version bump"
+            VERSION_TYPE="minor"
+          fi
+          
+          # Generate new version tag
+          NEW_VERSION=$(npx semver $CURRENT_VERSION -i $VERSION_TYPE)
+          echo "🏷️ Generated new version: $NEW_VERSION"
           
           # Determine if we should publish
           SHOULD_PUBLISH="false"
           if [ "$CURRENT_PUPPETEER" != "$LATEST_PUPPETEER" ] || [ "$CURRENT_PLAYWRIGHT" != "$LATEST_PLAYWRIGHT" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
             SHOULD_PUBLISH="true"
             echo "✅ Publishing triggered!"
+            echo "  Reason: Updates found or force_publish=true"
+            echo "  New version will be: $NEW_VERSION"
           else
             echo "ℹ️ No updates found, skipping publish"
+            echo "  To force publish, set force_publish=true"
           fi
           
+          echo "📋 Final decision: SHOULD_PUBLISH=$SHOULD_PUBLISH"
+          echo "🏷️ Version tag: $NEW_VERSION"
+          
+          # Update package.json with new version if publishing
+          if [ "$SHOULD_PUBLISH" = "true" ]; then
+            echo "📈 Updating package.json with new version and dependencies..."
+            
+            # Update package version
+            npm version $NEW_VERSION --no-git-tag-version
+            
+            # Update to latest dependency versions
+            npm install puppeteer-core@$LATEST_PUPPETEER --save-optional
+            npm install playwright-core@$LATEST_PLAYWRIGHT --save-optional
+            
+            echo "✅ Package.json updated with version $NEW_VERSION"
+            echo "✅ Dependencies updated to latest versions"
+          fi
+          
+          # Set outputs
           echo "should_publish=$SHOULD_PUBLISH" >> $GITHUB_OUTPUT
           echo "new_puppeteer_version=$LATEST_PUPPETEER" >> $GITHUB_OUTPUT
           echo "new_playwright_version=$LATEST_PLAYWRIGHT" >> $GITHUB_OUTPUT
-
-      - name: 📈 Update Package Versions
-        if: steps.version_check.outputs.should_publish == 'true'
-        run: |
-          echo "📈 Updating package.json with latest versions..."
-          
-          # Update to latest versions
-          npm install puppeteer-core@${{ steps.version_check.outputs.new_puppeteer_version }} --save-optional
-          npm install playwright-core@${{ steps.version_check.outputs.new_playwright_version }} --save-optional
-          
-          echo "✅ Dependencies updated"
-
-      - name: 🏷️ Version Bump
-        id: version_bump
-        if: steps.version_check.outputs.should_publish == 'true'
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          VERSION_TYPE="${{ github.event.inputs.version_bump || 'patch' }}"
-          NEW_VERSION=$(npx semver $CURRENT_VERSION -i $VERSION_TYPE)
-          
-          echo "📊 New Version: $NEW_VERSION"
-          npm version $NEW_VERSION --no-git-tag-version
-          
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
 
       - name: 🛡️ Setup Stealth Features
         if: steps.version_check.outputs.should_publish == 'true'
@@ -131,23 +152,91 @@ jobs:
         if: steps.version_check.outputs.should_publish == 'true'
         run: |
           echo "📦 Creating Brave packages..."
+          
+          # Show current directory structure
+          echo "📁 Current directory structure:"
+          ls -la
+          
+          # Create packages
           npm run create-brave-packages
+          
+          # Verify packages were created
+          echo "🔍 Verifying package creation:"
+          if [ -d "dist" ]; then
+            echo "✅ dist directory exists"
+            ls -la dist/
+            
+            if [ -d "dist/brave-real-puppeteer-core" ]; then
+              echo "✅ Puppeteer package created"
+              ls -la dist/brave-real-puppeteer-core/
+            else
+              echo "❌ Puppeteer package NOT created"
+            fi
+            
+            if [ -d "dist/brave-real-playwright-core" ]; then
+              echo "✅ Playwright package created"
+              ls -la dist/brave-real-playwright-core/
+            else
+              echo "❌ Playwright package NOT created"
+            fi
+          else
+            echo "❌ dist directory does not exist"
+            exit 1
+          fi
 
       - name: 🔐 NPM Authentication
         if: steps.version_check.outputs.should_publish == 'true'
         run: |
           echo "🔐 Setting up NPM authentication..."
+          
+          # Check if NPM_TOKEN exists
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "❌ NPM_TOKEN secret is not set!"
+            echo "Please add NPM_TOKEN to repository secrets"
+            exit 1
+          fi
+          
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          
+          # Verify authentication
+          echo "🔍 Verifying NPM authentication..."
           npm whoami
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ NPM authentication successful"
+          else
+            echo "❌ NPM authentication failed"
+            exit 1
+          fi
 
       - name: 🎭 Publish Puppeteer Package
         if: steps.version_check.outputs.should_publish == 'true'
         run: |
           echo "🎭 Publishing brave-real-puppeteer-core..."
           
+          # Verify package exists
+          if [ ! -d "dist/brave-real-puppeteer-core" ]; then
+            echo "❌ Package directory not found: dist/brave-real-puppeteer-core"
+            ls -la dist/
+            exit 1
+          fi
+          
           cd dist/brave-real-puppeteer-core/
-          npm version ${{ steps.version_bump.outputs.new_version }} --no-git-tag-version
-          npm publish --access public --tag latest
+          
+          # Show package contents
+          echo "📁 Package contents:"
+          ls -la
+          
+          # Update version
+          npm version ${{ steps.version_check.outputs.new_version }} --no-git-tag-version
+          
+          # Show package.json
+          echo "📋 Package info:"
+          cat package.json | head -20
+          
+          # Publish with detailed output
+          echo "🚀 Publishing to NPM..."
+          npm publish --access public --tag latest --verbose
           
           echo "✅ Puppeteer package published!"
 
@@ -156,9 +245,29 @@ jobs:
         run: |
           echo "🎪 Publishing brave-real-playwright-core..."
           
+          # Verify package exists
+          if [ ! -d "dist/brave-real-playwright-core" ]; then
+            echo "❌ Package directory not found: dist/brave-real-playwright-core"
+            ls -la dist/
+            exit 1
+          fi
+          
           cd dist/brave-real-playwright-core/
-          npm version ${{ steps.version_bump.outputs.new_version }} --no-git-tag-version
-          npm publish --access public --tag latest
+          
+          # Show package contents
+          echo "📁 Package contents:"
+          ls -la
+          
+          # Update version
+          npm version ${{ steps.version_check.outputs.new_version }} --no-git-tag-version
+          
+          # Show package.json
+          echo "📋 Package info:"
+          cat package.json | head -20
+          
+          # Publish with detailed output
+          echo "🚀 Publishing to NPM..."
+          npm publish --access public --tag latest --verbose
           
           echo "✅ Playwright package published!"
 
@@ -173,16 +282,18 @@ jobs:
           git commit -m "🔄 Auto-update: Puppeteer ${{ steps.version_check.outputs.new_puppeteer_version }}, Playwright ${{ steps.version_check.outputs.new_playwright_version }}"
           
           # Create tag
-          git tag -a "v${{ steps.version_bump.outputs.new_version }}" -m "🚀 Release v${{ steps.version_bump.outputs.new_version }}
+          git tag -a "v${{ steps.version_check.outputs.new_version }}" -m "🚀 Release v${{ steps.version_check.outputs.new_version }}
 
           📦 Published Packages:
-          🎭 brave-real-puppeteer-core@${{ steps.version_bump.outputs.new_version }}
-          🎪 brave-real-playwright-core@${{ steps.version_bump.outputs.new_version }}
+          🎭 brave-real-puppeteer-core@${{ steps.version_check.outputs.new_version }}
+          🎪 brave-real-playwright-core@${{ steps.version_check.outputs.new_version }}
           
-          🛡️ Features: 50+ Stealth, Ultra-Fast Performance, Brave Integration"
+          🚫️ Features: 50+ Stealth, Ultra-Fast Performance, Brave Integration
+          🔄 Dependencies: Puppeteer ${{ steps.version_check.outputs.new_puppeteer_version }}, Playwright ${{ steps.version_check.outputs.new_playwright_version }}
+          🏷️ Version Type: ${{ steps.version_check.outputs.version_type }}"
           
           git push origin main
-          git push origin "v${{ steps.version_bump.outputs.new_version }}"
+          git push origin "v${{ steps.version_check.outputs.new_version }}"
 
       - name: 📝 Create GitHub Release
         if: steps.version_check.outputs.should_publish == 'true'
@@ -190,14 +301,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          tag_name: "v${{ steps.version_bump.outputs.new_version }}"
-          release_name: "🚀 Brave Stealth v${{ steps.version_bump.outputs.new_version }}"
+          tag_name: "v${{ steps.version_check.outputs.new_version }}"
+          release_name: "🚀 Brave Stealth v${{ steps.version_check.outputs.new_version }} - Auto Generated"
           body: |
-            ## 🦁 Brave Real Puppeteer Playwright Core v${{ steps.version_bump.outputs.new_version }}
+            ## 🦁 Brave Real Puppeteer Playwright Core v${{ steps.version_check.outputs.new_version }}
             
-            ### 📦 Published Packages
-            - 🎭 `brave-real-puppeteer-core@${{ steps.version_bump.outputs.new_version }}`
-            - 🎪 `brave-real-playwright-core@${{ steps.version_bump.outputs.new_version }}`
+            ### 📦 Auto-Published Packages
+            - 🎭 `brave-real-puppeteer-core@${{ steps.version_check.outputs.new_version }}`
+            - 🎪 `brave-real-playwright-core@${{ steps.version_check.outputs.new_version }}`
+            
+            ### 🏷️ Version Details
+            - **Version Type**: `${{ steps.version_check.outputs.version_type }}`
+            - **Auto-Generated**: Based on dependency updates
             
             ### 🔄 Dependencies Updated
             - **Puppeteer Core**: `${{ steps.version_check.outputs.new_puppeteer_version }}`
@@ -225,10 +340,14 @@ jobs:
         run: |
           if [ "${{ steps.version_check.outputs.should_publish }}" = "true" ]; then
             echo "✅ Packages published successfully!"
-            echo "🎭 brave-real-puppeteer-core@${{ steps.version_bump.outputs.new_version }}"
-            echo "🎪 brave-real-playwright-core@${{ steps.version_bump.outputs.new_version }}"
+            echo "🎭 brave-real-puppeteer-core@${{ steps.version_check.outputs.new_version }}"
+            echo "🎪 brave-real-playwright-core@${{ steps.version_check.outputs.new_version }}"
+            echo "🏷️ Version: ${{ steps.version_check.outputs.new_version }} (${{ steps.version_check.outputs.version_type }})"
+            echo "🔄 Puppeteer: ${{ steps.version_check.outputs.new_puppeteer_version }}"
+            echo "🔄 Playwright: ${{ steps.version_check.outputs.new_playwright_version }}"
           else
             echo "ℹ️ No updates found, no action taken"
+            echo "📋 To force publish, set force_publish=true"
           fi
           
           echo "💰 FREE TIER: Build completed efficiently"
