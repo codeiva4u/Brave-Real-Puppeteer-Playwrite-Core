@@ -212,16 +212,30 @@ jobs:
             exit 1
           fi
           
+          # Setup NPM authentication with proper format
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
           
-          # Verify authentication
+          # Show npmrc contents (without token)
+          echo "📁 NPM config file contents:"
+          sed 's/:_authToken=.*/:_authToken=[HIDDEN]/' ~/.npmrc
+          
+          # Verify authentication with better error handling
           echo "🔍 Verifying NPM authentication..."
-          npm whoami
-          
-          if [ $? -eq 0 ]; then
-            echo "✅ NPM authentication successful"
+          if npm whoami > /dev/null 2>&1; then
+            USERNAME=$(npm whoami)
+            echo "✅ NPM authentication successful! Logged in as: $USERNAME"
           else
-            echo "❌ NPM authentication failed"
+            echo "❌ NPM authentication failed!"
+            echo "📝 Debugging info:"
+            echo "- Token length: ${#{{ secrets.NPM_TOKEN }}}"
+            echo "- NPM registry: $(npm config get registry)"
+            echo "💡 Possible solutions:"
+            echo "1. Regenerate NPM token (npm token create --type=automation)"
+            echo "2. Check token permissions (must have publish access)"
+            echo "3. Verify token is not expired"
+            echo "4. Ensure token is for correct NPM account"
             exit 1
           fi
 
@@ -251,10 +265,18 @@ jobs:
           cat package.json | head -20
           
           # Publish with detailed output
-          echo "🚀 Publishing to NPM..."
-          npm publish --access public --tag latest --verbose
-          
-          echo "✅ Puppeteer package published!"
+          echo "🚀 Publishing brave-real-puppeteer-core to NPM..."
+          if npm publish --access public --tag latest --verbose; then
+            echo "✅ brave-real-puppeteer-core@${{ steps.version_check.outputs.new_version }} published successfully!"
+          else
+            echo "❌ Failed to publish brave-real-puppeteer-core"
+            echo "📝 Possible reasons:"
+            echo "1. Package name already exists with this version"
+            echo "2. NPM token doesn't have publish permissions"
+            echo "3. Package validation failed"
+            echo "4. Network/registry issues"
+            exit 1
+          fi
 
       - name: 🎪 Publish Playwright Package  
         if: steps.version_check.outputs.should_publish == 'true'
@@ -282,10 +304,18 @@ jobs:
           cat package.json | head -20
           
           # Publish with detailed output
-          echo "🚀 Publishing to NPM..."
-          npm publish --access public --tag latest --verbose
-          
-          echo "✅ Playwright package published!"
+          echo "🚀 Publishing brave-real-playwright-core to NPM..."
+          if npm publish --access public --tag latest --verbose; then
+            echo "✅ brave-real-playwright-core@${{ steps.version_check.outputs.new_version }} published successfully!"
+          else
+            echo "❌ Failed to publish brave-real-playwright-core"
+            echo "📝 Possible reasons:"
+            echo "1. Package name already exists with this version"
+            echo "2. NPM token doesn't have publish permissions"
+            echo "3. Package validation failed"
+            echo "4. Network/registry issues"
+            exit 1
+          fi
 
       - name: 🏷️ Create Git Tag
         if: steps.version_check.outputs.should_publish == 'true'
