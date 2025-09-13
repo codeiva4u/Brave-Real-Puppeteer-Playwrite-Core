@@ -314,29 +314,31 @@ Test Results:
 
 ## 🔄 GitHub Actions Workflow
 
-### **Automatic Publishing**
+### **Free Tier Optimized Publishing**
 ```yaml
-# Weekly automatic checks - Every Sunday 2 AM UTC
+# Manual trigger only (FREE TIER FRIENDLY)
 # Detects Puppeteer/Playwright updates
-# Automatically patches and publishes to NPM
-# Creates GitHub releases with changelogs
+# Single job combines all steps
+# Optimized for minimal build minutes
 
 Triggers:
-✅ Weekly schedule (cron: '0 2 * * 0')
 ✅ Manual dispatch (force publish options)
-✅ Push to main branch (code changes)
+✅ Critical file changes only
+✅ Skip tests option (saves build time)
 ```
 
 ### **Workflow Process**
 ```yaml
-Jobs:
-1. 🔍 Update Detection (2 min)
-2. 🏗️ Build & Test (8 min) 
-3. 🚀 NPM Publishing (3 min)
-4. 📢 Notifications (1 min)
-5. 📊 Status Update (30 sec)
+Single Job: All-in-One (FREE TIER OPTIMIZED)
+1. 🔍 Version Check
+2. 📝 Update Dependencies  
+3. 🚫 Setup Stealth (basic)
+4. 🧑‍🔬 Quick Tests (optional)
+5. 📦 Create Packages
+6. 🚀 NPM Publish
+7. 🏷️ Git Tag & Release
 
-Total Duration: ~15 minutes
+Total Duration: ~8 minutes (FREE TIER)
 ```
 
 ### **Setup Requirements**
@@ -346,6 +348,7 @@ GH_TOKEN   - GitHub Personal Access Token
 NPM_TOKEN  - NPM Authentication Token
 
 # Repository Settings > Secrets and Variables > Actions
+# No billing/payment required - FREE TIER compatible
 ```
 
 ## 📦 Package Structure
@@ -353,7 +356,7 @@ NPM_TOKEN  - NPM Authentication Token
 ```
 brave-real-puppeteer-playwright-core/
 ├── 📁 .github/workflows/
-│   └── auto-publish.yml          # Automatic publishing workflow
+│   └── free-tier-publish.yml     # FREE TIER optimized workflow
 ├── 📁 scripts/
 │   ├── patcher.js                # Main patching engine
 │   ├── enhanced-patcher.js       # Advanced patching with AI
