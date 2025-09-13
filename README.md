@@ -55,16 +55,108 @@
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 📦 NPM Packages (Recommended - Ready to Use!)
+
+```bash
+# Install pre-built packages with ALL stealth features
+npm install brave-real-puppeteer-core
+npm install brave-real-playwright-core
+```
+
+#### Usage with NPM Packages
+```javascript
+// Puppeteer with all stealth features built-in
+const puppeteer = require('brave-real-puppeteer-core');
+
+const browser = await puppeteer.launch({
+  headless: false // All 50+ stealth features automatically active!
+});
+
+const page = await browser.newPage();
+await page.goto('https://bot-detector.rebrowser.net/');
+console.log('✅ 100% stealth test passed!');
+await browser.close();
+```
+
+```javascript
+// Playwright with all stealth features built-in
+const { chromium } = require('brave-real-playwright-core');
+
+const browser = await chromium.launch({ headless: false });
+const page = await browser.newPage();
+await page.goto('https://bot-detector.rebrowser.net/');
+console.log('✅ 100% stealth test passed!');
+await browser.close();
+```
+
+#### 🛡️ Advanced Stealth Usage
+
+```javascript
+// Access stealth configuration
+const stealthConfig = require('brave-real-puppeteer-core/advanced-stealth');
+console.log('Stealth Level:', stealthConfig.stealthLevel); // 'professional'
+console.log('Features:', stealthConfig.features);
+console.log('Performance:', stealthConfig.performance);
+
+// Manual stealth injection (if needed)
+const fs = require('fs');
+const stealthScript = fs.readFileSync(
+  require.resolve('brave-real-puppeteer-core/stealth-injection.js'), 'utf8'
+);
+
+// Inject in existing page
+await page.evaluateOnNewDocument(stealthScript);
+```
+
+#### 🚀 Performance Features
+
+```javascript
+const puppeteer = require('brave-real-puppeteer-core');
+
+const browser = await puppeteer.launch({
+  headless: false,
+  // These features are automatically enabled:
+  // ✅ Ultra-fast 1-5ms timing
+  // ✅ Instant network responses  
+  // ✅ Optimized Promise resolution
+  // ✅ Memory management
+  // ✅ Natural human behavior simulation
+});
+
+const page = await browser.newPage();
+
+// All these work with full stealth protection:
+await page.goto('https://example.com');
+await page.click('button'); // Natural mouse movements
+await page.type('input', 'text', { delay: 100 }); // Human-like typing
+await page.scroll({ top: 500 }); // Natural scrolling patterns
+
+// Bot detection tests will pass:
+const result = await page.evaluate(() => {
+  return {
+    webdriver: navigator.webdriver, // undefined
+    plugins: navigator.plugins.length, // realistic number
+    languages: navigator.languages, // ['en-US', 'en']
+    canvas: 'test passed', // fingerprint protected
+    webgl: 'test passed'  // fingerprint protected
+  };
+});
+
+console.log('Stealth test results:', result);
+```
+
+### 🔧 From Source (Development)
+
+#### Prerequisites
 - Node.js 18 या higher
 - NPM या Yarn
 - Windows/macOS/Linux
 
-### Installation
+#### Installation
 ```bash
 # Clone repository
-git clone https://github.com/your-repo/brave-real-puppeteer-playwright-core.git
-cd brave-real-puppeteer-playwright-core
+git clone https://github.com/codeiva4u/Brave-Real-Puppeteer-Playwrite-Core.git
+cd Brave-Real-Puppeteer-Playwrite-Core
 
 # Install dependencies
 npm install

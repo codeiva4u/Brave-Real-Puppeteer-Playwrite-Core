@@ -33,7 +33,12 @@ export const fatalError = (...args) => {
 }
 
 export const getPatchBaseCmd = (patchFilePath) => {
-  return `patch --batch -p1 --input=${patchFilePath} --verbose --no-backup-if-mismatch --reject-file=- --forward --silent`
+  // Properly escape path for Windows compatibility (handle spaces and special chars)
+  const escapedPath = process.platform === 'win32' 
+    ? `"${patchFilePath.replace(/"/g, '\"')}"` 
+    : patchFilePath;
+    
+  return `patch --batch -p1 --input=${escapedPath} --verbose --no-backup-if-mismatch --reject-file=- --forward --silent`
 }
 
 export const isDebug = () => {

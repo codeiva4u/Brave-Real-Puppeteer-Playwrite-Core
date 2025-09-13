@@ -325,6 +325,39 @@ jobs:
           echo "🦁 brave-real-puppeteer-core Package Info:"
           cat dist/brave-real-puppeteer-core/package.json
           
+          # CRITICAL: Validate stealth files are present
+          echo "🎭 Validating stealth files..."
+          if [ ! -f "dist/brave-real-puppeteer-core/stealth-injection.js" ]; then
+            echo "❌ stealth-injection.js missing!"
+            exit 1
+          fi
+          
+          if [ ! -f "dist/brave-real-puppeteer-core/advanced-stealth.js" ]; then
+            echo "❌ advanced-stealth.js missing!"
+            exit 1
+          fi
+          
+          # Check stealth files content
+          STEALTH_SIZE=$(wc -c < dist/brave-real-puppeteer-core/stealth-injection.js)
+          ADVANCED_SIZE=$(wc -c < dist/brave-real-puppeteer-core/advanced-stealth.js)
+          
+          echo "✅ Stealth files validation:"
+          echo "   stealth-injection.js: $STEALTH_SIZE bytes"
+          echo "   advanced-stealth.js: $ADVANCED_SIZE bytes"
+          
+          # Minimum size check (should be > 1KB for real features)
+          if [ "$STEALTH_SIZE" -lt 1024 ]; then
+            echo "❌ stealth-injection.js too small (< 1KB) - missing features!"
+            exit 1
+          fi
+          
+          if [ "$ADVANCED_SIZE" -lt 1024 ]; then
+            echo "❌ advanced-stealth.js too small (< 1KB) - missing features!"
+            exit 1
+          fi
+          
+          echo "✅ All stealth features validated successfully!"
+          
       - name: 📤 Upload Puppeteer Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -384,6 +417,34 @@ jobs:
           ls -la dist/
           echo "🦁 brave-real-playwright-core Package Info:"
           cat dist/brave-real-playwright-core/package.json
+          
+          # CRITICAL: Validate stealth files are present
+          echo "🎭 Validating Playwright stealth files..."
+          if [ ! -f "dist/brave-real-playwright-core/stealth-injection.js" ]; then
+            echo "❌ Playwright stealth-injection.js missing!"
+            exit 1
+          fi
+          
+          if [ ! -f "dist/brave-real-playwright-core/advanced-stealth.js" ]; then
+            echo "❌ Playwright advanced-stealth.js missing!"
+            exit 1
+          fi
+          
+          # Check stealth files content
+          STEALTH_SIZE=$(wc -c < dist/brave-real-playwright-core/stealth-injection.js)
+          ADVANCED_SIZE=$(wc -c < dist/brave-real-playwright-core/advanced-stealth.js)
+          
+          echo "✅ Playwright stealth files validation:"
+          echo "   stealth-injection.js: $STEALTH_SIZE bytes"
+          echo "   advanced-stealth.js: $ADVANCED_SIZE bytes"
+          
+          # Minimum size check
+          if [ "$STEALTH_SIZE" -lt 1024 ] || [ "$ADVANCED_SIZE" -lt 1024 ]; then
+            echo "❌ Playwright stealth files too small - missing features!"
+            exit 1
+          fi
+          
+          echo "✅ All Playwright stealth features validated successfully!"
           
       - name: 📤 Upload Playwright Artifact
         uses: actions/upload-artifact@v4

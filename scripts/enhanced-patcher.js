@@ -310,14 +310,18 @@ async function applyStealthEnhancements(packagePath, packageName) {
   for (const target of targets) {
     const patchFilePath = resolve(getPatcherPackagePath(), `./patches/${packageName}/${target}.patch`);
     
-    // Check patch status
+    // Check patch status with proper path escaping
     let patchStatus = 'unknown';
     try {
       await exec(`${getPatchBaseCmd(patchFilePath)} --dry-run`, { cwd: packagePath });
       patchStatus = 'unpatched';
     } catch (e) {
-      if (e.stdout.includes('Ignoring previously applied (or reversed) patch')) {
+      if (e.stdout && e.stdout.includes('Ignoring previously applied (or reversed) patch')) {
         patchStatus = 'patched';
+      } else if (e.message && e.message.includes("Can't open patch file")) {
+        log(`⚠️ Path issue detected: ${e.message}`);
+        // Try alternative patching method for Windows
+        patchStatus = 'path_issue';
       }
     }
     
