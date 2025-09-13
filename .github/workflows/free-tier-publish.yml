@@ -99,6 +99,14 @@ jobs:
           NEW_VERSION=$(npx semver $CURRENT_VERSION -i $VERSION_TYPE)
           echo "🏷️ Generated new version: $NEW_VERSION"
           
+          # Check if this version already exists on NPM
+          echo "🔍 Checking if version exists on NPM..."
+          if npm view brave-real-puppeteer-core@$NEW_VERSION > /dev/null 2>&1; then
+            echo "⚠️ Version $NEW_VERSION already exists, incrementing patch..."
+            NEW_VERSION=$(npx semver $NEW_VERSION -i patch)
+            echo "🏷️ New incremented version: $NEW_VERSION"
+          fi
+          
           # Determine if we should publish
           SHOULD_PUBLISH="false"
           if [ "$CURRENT_PUPPETEER" != "$LATEST_PUPPETEER" ] || [ "$CURRENT_PLAYWRIGHT" != "$LATEST_PLAYWRIGHT" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ] || [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
@@ -164,6 +172,30 @@ jobs:
           # Quick test with timeout
           timeout 60s npm run test-bot-detector-headless || echo "Tests completed"
 
+      - name: 🧪 Test NPM Access
+        if: steps.version_check.outputs.should_publish == 'true'
+        run: |
+          echo "🧪 Testing NPM access to existing packages..."
+          
+          # Test read access to our packages
+          if npm view brave-real-puppeteer-core > /dev/null 2>&1; then
+            echo "✅ Can read brave-real-puppeteer-core package"
+            LATEST_PUPPETEER_PKG=$(npm view brave-real-puppeteer-core version)
+            echo "  Latest version: $LATEST_PUPPETEER_PKG"
+          else
+            echo "❌ Cannot read brave-real-puppeteer-core package"
+          fi
+          
+          if npm view brave-real-playwright-core > /dev/null 2>&1; then
+            echo "✅ Can read brave-real-playwright-core package"
+            LATEST_PLAYWRIGHT_PKG=$(npm view brave-real-playwright-core version)
+            echo "  Latest version: $LATEST_PLAYWRIGHT_PKG"
+          else
+            echo "❌ Cannot read brave-real-playwright-core package"
+          fi
+          
+          echo "🔍 Next version to publish: ${{ steps.version_check.outputs.new_version }}"
+
       - name: 📦 Create Brave Packages
         if: steps.version_check.outputs.should_publish == 'true'
         run: |
@@ -212,10 +244,18 @@ jobs:
             exit 1
           fi
           
+          echo "🔍 NPM Token Debug Info:"
+          echo "- Token starts with: ${{{ secrets.NPM_TOKEN }}:0:4}..."
+          echo "- Token length: ${#{{ secrets.NPM_TOKEN }}}"
+          
           # Setup NPM authentication with proper format
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
           echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
+          
+          # Also try alternative NPM setup
+          npm config set registry https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
           
           # Show npmrc contents (without token)
           echo "📁 NPM config file contents:"
