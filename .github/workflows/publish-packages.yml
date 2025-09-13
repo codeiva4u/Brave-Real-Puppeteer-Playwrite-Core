@@ -60,12 +60,12 @@ jobs:
       (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-workflow]'))
     
     outputs:
-      has_updates: ${{ steps.version_check.outputs.has_updates || 'false' }}
-      puppeteer_current: ${{ steps.version_check.outputs.puppeteer_current || '24.20.0' }}
-      puppeteer_latest: ${{ steps.version_check.outputs.puppeteer_latest || '24.20.0' }}
-      playwright_current: ${{ steps.version_check.outputs.playwright_current || '1.55.0' }}
-      playwright_latest: ${{ steps.version_check.outputs.playwright_latest || '1.55.0' }}
-      should_publish: ${{ steps.decision.outputs.should_publish || 'true' }}
+      has_updates: ${{ steps.version_check.outputs.has_updates }}
+      puppeteer_current: ${{ steps.version_check.outputs.puppeteer_current }}
+      puppeteer_latest: ${{ steps.version_check.outputs.puppeteer_latest }}
+      playwright_current: ${{ steps.version_check.outputs.playwright_current }}
+      playwright_latest: ${{ steps.version_check.outputs.playwright_latest }}
+      should_publish: ${{ steps.decision.outputs.should_publish }}
       
     steps:
       - name: 📥 Checkout Repository
@@ -87,14 +87,7 @@ jobs:
         id: version_check
         run: |
           echo "🔍 Running version checker..."
-          node ./scripts/check-versions.js --check-only || echo "Version check completed"
-          
-          # Set default outputs in case script fails
-          echo "has_updates=false" >> $GITHUB_OUTPUT
-          echo "puppeteer_current=24.20.0" >> $GITHUB_OUTPUT
-          echo "puppeteer_latest=24.20.0" >> $GITHUB_OUTPUT
-          echo "playwright_current=1.55.0" >> $GITHUB_OUTPUT
-          echo "playwright_latest=1.55.0" >> $GITHUB_OUTPUT
+          node ./scripts/check-versions.js
         continue-on-error: true
         
       - name: 🧠 Make Publishing Decision
@@ -109,15 +102,14 @@ jobs:
           echo "   Event: $EVENT_NAME"
           echo "   Force Update: $FORCE_UPDATE"
           
-          # Always proceed with publishing for demo purposes
-          echo "should_publish=true" >> $GITHUB_OUTPUT
-          echo "✅ Publishing enabled for demonstration (Demo mode active)"
-          
-          # Show variables for debugging
-          echo "Debug info:"
-          echo "   HAS_UPDATES: $HAS_UPDATES"
-          echo "   EVENT_NAME: $EVENT_NAME"
-          echo "   FORCE_UPDATE: $FORCE_UPDATE"
+          # Decide whether to proceed with publishing
+          if [[ "$HAS_UPDATES" == "true" ]] || [[ "$FORCE_UPDATE" == "true" ]] || [[ "$EVENT_NAME" == "push" ]]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "✅ पब्लिशिंग के लिए आगे बढ़ेंगे (Will proceed with publishing)"
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ कोई अपडेट नहीं मिला, पब्लिशिंग स्किप करेंगे (No updates found, skipping publishing)"
+          fi
           
       - name: 📤 Commit Updated Versions
         if: steps.version_check.outputs.has_updates == 'true'
@@ -132,15 +124,14 @@ jobs:
           echo "✅ Versions updated and committed to repository"
 
   test:
-    name: 🧦 Test Cross-Platform
+    name: 🧪 Test Cross-Platform
     runs-on: ${{ matrix.os }}
     needs: check-versions
     if: needs.check-versions.outputs.should_publish == 'true'
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2022, macos-latest]
-        node-version: [20, 22]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20, 22]
     
     steps:
       - name: 📥 Checkout Repository
@@ -159,22 +150,16 @@ jobs:
         run: npm ci
         
       - name: 🎭 Setup Puppeteer
-        run: |
-          echo "Setting up Puppeteer..."
-          npm run setup-puppeteer || echo "Puppeteer setup completed with warnings"
+        run: npm run setup-puppeteer
         continue-on-error: true
         
       - name: 🎪 Setup Playwright
-        run: |
-          echo "Setting up Playwright..."
-          npm run setup-playwright || echo "Playwright setup completed with warnings"
+        run: npm run setup-playwright
         continue-on-error: true
         
-      - name: 🤖 Quick Test (No Browser)
-        run: |
-          echo "Running basic validation..."
-          node -e "console.log('✅ Node.js and project structure validated')"
-          echo "✅ Test completed successfully"
+      - name: 🤖 Run AI Agent Tests
+        run: npm run ai-agent
+        timeout-minutes: 10
         continue-on-error: true
         
       - name: ✅ Validate Project Structure
@@ -255,10 +240,10 @@ jobs:
           fi
 
   build-puppeteer:
-    name: 🎭 Build Puppeteer Package  
+    name: 🎭 Build Puppeteer Package
     runs-on: ubuntu-latest
     needs: [test, generate-version, check-versions]
-    if: false  # Disabled - requires GitHub billing
+    if: needs.check-versions.outputs.should_publish == 'true'
     
     steps:
       - name: 📥 Checkout Repository
@@ -288,7 +273,7 @@ jobs:
       - name: 📦 Create Brave-Puppeteer Package
         run: |
           echo "🦁 Creating Brave-Real-Puppeteer-Core with version: ${{ needs.generate-version.outputs.brave-version }}"
-          node ./scripts/brave-package.js --engine=puppeteer --brave-version="${{ needs.generate-version.outputs.brave-version }}"
+          node ./scripts/create-brave-package.js --engine=puppeteer --version="${{ needs.generate-version.outputs.brave-version }}"
         
       - name: 📋 Validate Package
         shell: bash
@@ -308,7 +293,7 @@ jobs:
     name: 🎪 Build Playwright Package
     runs-on: ubuntu-latest
     needs: [test, generate-version, check-versions]
-    if: false  # Disabled - requires GitHub billing
+    if: needs.check-versions.outputs.should_publish == 'true'
     
     steps:
       - name: 📥 Checkout Repository
@@ -338,7 +323,7 @@ jobs:
       - name: 📦 Create Brave-Playwright Package
         run: |
           echo "🦁 Creating Brave-Real-Playwright-Core with version: ${{ needs.generate-version.outputs.brave-version }}"
-          node ./scripts/brave-package.js --engine=playwright --brave-version="${{ needs.generate-version.outputs.brave-version }}"
+          node ./scripts/create-brave-package.js --engine=playwright --version="${{ needs.generate-version.outputs.brave-version }}"
         
       - name: 📋 Validate Package
         shell: bash
@@ -358,7 +343,12 @@ jobs:
     name: 🚀 Publish to NPM
     runs-on: ubuntu-latest
     needs: [build-puppeteer, build-playwright, generate-version, check-versions]
-    if: false  # Disabled - requires NPM publishing and GitHub billing
+    if: |
+      needs.check-versions.outputs.should_publish == 'true' && (
+        (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
+        (github.event_name == 'workflow_dispatch' && !inputs.dry_run) ||
+        github.event_name == 'schedule'
+      )
     environment: production
     
     steps:
@@ -464,10 +454,12 @@ jobs:
           prerelease: false
 
   dry-run:
-    name: 🧦 Dry Run Publish
+    name: 🧪 Dry Run Publish
     runs-on: ubuntu-latest
     needs: [build-puppeteer, build-playwright, generate-version, check-versions]
-    if: false  # Disabled - requires GitHub billing
+    if: |
+      (github.event_name == 'workflow_dispatch' && inputs.dry_run) ||
+      github.event_name == 'pull_request'
     
     steps:
       - name: 📥 Checkout Repository
