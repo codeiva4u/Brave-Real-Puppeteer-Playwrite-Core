@@ -24,7 +24,7 @@ class VersionChecker {
             const packageJson = JSON.parse(fs.readFileSync(this.packageJsonPath, 'utf8'));
             
             this.currentVersions = {
-                'puppeteer-core': packageJson.optionalDependencies?.['puppeteer-core']?.replace('^', '') || 'not-installed',
+                'puppeteer-core': packageJson.dependencies?.['puppeteer-core']?.replace('^', '') || packageJson.optionalDependencies?.['puppeteer-core']?.replace('^', '') || 'not-installed',
                 'playwright-core': packageJson.optionalDependencies?.['playwright-core']?.replace('^', '') || 'not-installed'
             };
 
@@ -107,9 +107,13 @@ class VersionChecker {
                     this.latestVersions[pkg] !== 'error' && 
                     this.currentVersions[pkg] !== 'not-installed') {
                     
-                    if (packageJson.optionalDependencies?.[pkg]) {
+                    // Update in dependencies first, then optionalDependencies
+                    if (packageJson.dependencies?.[pkg]) {
+                        packageJson.dependencies[pkg] = `^${this.latestVersions[pkg]}`;
+                        console.log(`   ✅ Updated ${pkg} to ^${this.latestVersions[pkg]} in dependencies`);
+                    } else if (packageJson.optionalDependencies?.[pkg]) {
                         packageJson.optionalDependencies[pkg] = `^${this.latestVersions[pkg]}`;
-                        console.log(`   ✅ Updated ${pkg} to ^${this.latestVersions[pkg]}`);
+                        console.log(`   ✅ Updated ${pkg} to ^${this.latestVersions[pkg]} in optionalDependencies`);
                     }
                 }
             }

@@ -43,12 +43,13 @@ class BravePackageCreator {
     constructor(options = {}) {
         this.outputDir = resolve(projectRoot, options.output || 'dist');
         
-        // Get dynamic versions from package.json
+        // Get dynamic versions from package.json with comprehensive fallback
         const packageJsonPath = resolve(projectRoot, 'package.json');
         const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
         
-        this.puppeteerVersion = packageJson.optionalDependencies?.['puppeteer-core']?.replace('^', '') || '24.19.0';
-        this.playwrightVersion = packageJson.optionalDependencies?.['playwright-core']?.replace('^', '') || '1.55.0';
+        // Smart version detection with fallback chain
+        this.puppeteerVersion = this.extractVersionFromPackageJson(packageJson, 'puppeteer-core') || '24.20.0';
+        this.playwrightVersion = this.extractVersionFromPackageJson(packageJson, 'playwright-core') || '1.55.0';
         
         // Auto-generate brave version if not provided
         this.braveVersion = options.braveVersion || options.version || this.generateBraveVersion();
@@ -57,6 +58,57 @@ class BravePackageCreator {
         console.log(`🦁 Brave version: ${this.braveVersion}`);
     }
 
+    /**
+     * Extract version from package.json with comprehensive fallback
+     */
+    extractVersionFromPackageJson(packageJson, packageName) {
+        // Try multiple locations in order of preference
+        const locations = [
+            packageJson.dependencies?.[packageName],
+            packageJson.optionalDependencies?.[packageName],
+            packageJson.devDependencies?.[packageName],
+            packageJson.peerDependencies?.[packageName]
+        ];
+        
+        for (const version of locations) {
+            if (version) {
+                const cleanVersion = version.replace(/^[~^]/, '');
+                console.log(`📦 Found ${packageName}@${cleanVersion} in package.json`);
+                return cleanVersion;
+            }
+        }
+        
+        console.warn(`⚠️ Version for ${packageName} not found in package.json, using fallback`);
+        return null;
+    }
+    
+    /**
+     * Validate installed version matches package.json version
+     */
+    validateInstalledVersion(packageName, expectedVersion) {
+        try {
+            const installedPackageJsonPath = resolve(projectRoot, 'node_modules', packageName, 'package.json');
+            if (!existsSync(installedPackageJsonPath)) {
+                console.warn(`⚠️ ${packageName} not installed, version validation skipped`);
+                return false;
+            }
+            
+            const installedPackageJson = JSON.parse(readFileSync(installedPackageJsonPath, 'utf8'));
+            const installedVersion = installedPackageJson.version;
+            
+            if (installedVersion === expectedVersion) {
+                console.log(`✅ Version sync confirmed: ${packageName}@${installedVersion}`);
+                return true;
+            } else {
+                console.warn(`🔄 Version mismatch: ${packageName} expected ${expectedVersion}, installed ${installedVersion}`);
+                return false;
+            }
+        } catch (error) {
+            console.warn(`⚠️ Could not validate ${packageName} version:`, error.message);
+            return false;
+        }
+    }
+    
     /**
      * Generate automatic brave version based on current date and time
      */
@@ -211,6 +263,10 @@ class BravePackageCreator {
             console.log('📦 Installing puppeteer-core...');
             execSync(`npm install puppeteer-core@${this.puppeteerVersion}`, { cwd: projectRoot, stdio: 'inherit' });
         }
+        
+        // Validate version synchronization
+        console.log('🔍 Validating version synchronization...');
+        this.validateInstalledVersion('puppeteer-core', this.puppeteerVersion);
 
         // Skip patching since packages are already patched in the working project
         console.log('✅ Using already patched puppeteer-core from working project...');
@@ -230,6 +286,11 @@ class BravePackageCreator {
         
         console.log('📆 Using actual dependencies from puppeteer-core:', Object.keys(actualDependencies).join(', '));
 
+        // Validate version before creating package
+        if (!this.puppeteerVersion || this.puppeteerVersion === 'undefined') {
+            throw new Error('❌ Puppeteer version could not be determined. Please check package.json dependencies.');
+        }
+        
         // Create brave-specific package.json
         const bravePackageJson = {
             name: packageName,
@@ -375,6 +436,10 @@ await page.goto('https://bot-detector.rebrowser.net/');
             console.log('📦 Installing playwright-core...');
             execSync(`npm install playwright-core@${this.playwrightVersion}`, { cwd: projectRoot, stdio: 'inherit' });
         }
+        
+        // Validate version synchronization
+        console.log('🔍 Validating version synchronization...');
+        this.validateInstalledVersion('playwright-core', this.playwrightVersion);
 
         // Skip patching since packages are already patched in the working project
         console.log('✅ Using already patched playwright-core from working project...');
@@ -387,6 +452,11 @@ await page.goto('https://bot-detector.rebrowser.net/');
         console.log('🎭 Adding stealth injection files...');
         await this.ensureStealthFiles(packageDir, 'playwright');
 
+        // Validate version before creating package
+        if (!this.playwrightVersion || this.playwrightVersion === 'undefined') {
+            throw new Error('❌ Playwright version could not be determined. Please check package.json dependencies.');
+        }
+        
         // Create brave-specific package.json
         const bravePackageJson = {
             name: packageName,
