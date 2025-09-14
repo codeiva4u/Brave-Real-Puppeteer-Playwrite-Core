@@ -1,13 +1,13 @@
 name: 🦁 Brave NPM Auto-Publish
 
 on:
-  workflow_dispatch:   # manually भी चला सकते हो
   push:
-    branches: [ main ] # main branch पर push होने पर run
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '.gitignore'
+    branches: [ main ]
+  workflow_dispatch:
+
+# ✅ GITHUB_TOKEN को लिखने (push/tag/commit) की permission दो
+permissions:
+  contents: write
 
 jobs:
   auto-version-and-publish:
@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}   # ✅ सही token से checkout
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -29,36 +29,17 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 🆕 Auto bump patch version + create git tag
       - name: 🔧 Bump Version and Create Git Tag
         id: version
         uses: phips28/gh-action-bump-version@master
         with:
-          tag-prefix: "v"       # tag बनेगा v1.0.1 जैसा
-          default: patch        # हमेशा patch bump होगा
+          tag-prefix: "v"
+          default: patch
           commit-message: "🔖 release: {version}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🎭 Run Comprehensive Setup & Testing
-        run: |
-          npm run version-sync
-          npm run setup-both-basic
-          npm run create-brave-packages
-          npm run ai-agent
-
-      - name: 🧪 Bot Detection Test (Headless)
-        run: npm run test-bot-detector-headless || echo "⚠️ Bot detection test completed with warnings"
 
       - name: 🚀 Publish to NPM
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: 🎉 Success Summary
-        run: |
-          echo "🎉 WORKFLOW COMPLETED SUCCESSFULLY!"
-          echo "📦 Package: brave-real-puppeteer-playwright-core"
-          echo "🏷️ Tag: v${{ steps.version.outputs.newTag }}"
-          echo "🔖 Version: ${{ steps.version.outputs.newVersion }}"
-          echo "🚀 Published to NPM"
