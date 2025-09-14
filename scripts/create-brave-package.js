@@ -314,7 +314,8 @@ class BravePackageCreator {
             description: `Brave-optimized Puppeteer Core (v${this.puppeteerVersion}) with comprehensive stealth patches and cross-platform browser detection`,
             keywords: [
                 "puppeteer", "brave", "stealth", "automation", "bot-detection", "undetectable",
-                "cross-platform", "rebrowser", "patches", "anti-detection"
+                "cross-platform", "rebrowser", "patches", "anti-detection",
+                `puppeteer-${this.puppeteerVersion}`, "puppeteer-core", "patch-version"
             ],
             main: "lib/cjs/puppeteer/puppeteer-core.js",
             types: "lib/types.d.ts",
@@ -337,7 +338,9 @@ class BravePackageCreator {
             license: "MIT",
             dependencies: actualDependencies,
             optionalDependencies: {},
-            peerDependencies: {},
+            peerDependencies: {
+                "puppeteer-core": this.puppeteerVersion
+            },
             files: [
                 "lib",
                 "src",
@@ -350,7 +353,13 @@ class BravePackageCreator {
                 version: this.braveVersion,
                 basedOn: {
                     "puppeteer-core": this.puppeteerVersion,
-                    "patches-version": this.braveVersion
+                    "patches-version": this.braveVersion,
+                    "release-info": `Brave Puppeteer v${this.braveVersion} based on Puppeteer Core v${this.puppeteerVersion}`
+                },
+                versionInfo: {
+                    braveVersion: this.braveVersion,
+                    puppeteerVersion: this.puppeteerVersion,
+                    fullName: `Brave Puppeteer Core v${this.braveVersion} (Puppeteer ${this.puppeteerVersion})`
                 },
                 features: [
                     "ultra-fast-timing",
@@ -372,11 +381,13 @@ class BravePackageCreator {
         );
 
         // Create brave-specific README
-        const braveReadme = `# 🦁 brave-real-puppeteer-core
+        const braveReadme = `# 🦁 brave-real-puppeteer-core v${this.braveVersion}
+
+**Based on Puppeteer Core v${this.puppeteerVersion}**
 
 **Brave Real-World Optimized Puppeteer Core with comprehensive stealth patches**
 
-This is a pre-patched version of puppeteer-core optimized for maximum stealth when using Brave browser.
+This is a pre-patched version of **Puppeteer Core v${this.puppeteerVersion}** optimized for maximum stealth when using Brave browser.
 
 ## ✨ Features
 
@@ -523,7 +534,13 @@ await page.goto('https://bot-detector.rebrowser.net/');
                 version: this.braveVersion,
                 basedOn: {
                     "playwright-core": this.playwrightVersion,
-                    "patches-version": this.braveVersion
+                    "patches-version": this.braveVersion,
+                    "release-info": `Brave Playwright v${this.braveVersion} based on Playwright Core v${this.playwrightVersion}`
+                },
+                versionInfo: {
+                    braveVersion: this.braveVersion,
+                    playwrightVersion: this.playwrightVersion,
+                    fullName: `Brave Playwright Core v${this.braveVersion} (Playwright ${this.playwrightVersion})`
                 },
                 features: [
                     "error-stack-sanitization",
@@ -545,11 +562,13 @@ await page.goto('https://bot-detector.rebrowser.net/');
         );
 
         // Create brave-specific README
-        const braveReadme = `# 🦁 brave-real-playwright-core
+        const braveReadme = `# 🦁 brave-real-playwright-core v${this.braveVersion}
+
+**Based on Playwright Core v${this.playwrightVersion}**
 
 **Brave Real-World Optimized Playwright Core with comprehensive stealth patches**
 
-This is a pre-patched version of playwright-core optimized for maximum stealth when using Brave browser.
+This is a pre-patched version of **Playwright Core v${this.playwrightVersion}** optimized for maximum stealth when using Brave browser.
 
 ## ✨ Features
 
