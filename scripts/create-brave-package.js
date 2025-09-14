@@ -311,7 +311,7 @@ class BravePackageCreator {
         const bravePackageJson = {
             name: packageName,
             version: this.braveVersion,
-            description: "Brave-optimized Puppeteer Core with comprehensive stealth patches and cross-platform browser detection",
+            description: `Brave-optimized Puppeteer Core (v${this.puppeteerVersion}) with comprehensive stealth patches and cross-platform browser detection`,
             keywords: [
                 "puppeteer", "brave", "stealth", "automation", "bot-detection", "undetectable",
                 "cross-platform", "rebrowser", "patches", "anti-detection"
@@ -348,6 +348,10 @@ class BravePackageCreator {
             brave: {
                 optimized: true,
                 version: this.braveVersion,
+                basedOn: {
+                    "puppeteer-core": this.puppeteerVersion,
+                    "patches-version": this.braveVersion
+                },
                 features: [
                     "ultra-fast-timing",
                     "cross-platform-detection",
@@ -477,7 +481,7 @@ await page.goto('https://bot-detector.rebrowser.net/');
         const bravePackageJson = {
             name: packageName,
             version: this.braveVersion,
-            description: "Brave-optimized Playwright Core with comprehensive stealth patches and error stack sanitization",
+            description: `Brave-optimized Playwright Core (v${this.playwrightVersion}) with comprehensive stealth patches and error stack sanitization`,
             keywords: [
                 "playwright", "brave", "stealth", "automation", "bot-detection", "undetectable",
                 "cross-platform", "rebrowser", "patches", "anti-detection"
@@ -517,6 +521,10 @@ await page.goto('https://bot-detector.rebrowser.net/');
             brave: {
                 optimized: true,
                 version: this.braveVersion,
+                basedOn: {
+                    "playwright-core": this.playwrightVersion,
+                    "patches-version": this.braveVersion
+                },
                 features: [
                     "error-stack-sanitization",
                     "ultra-fast-timing", 
