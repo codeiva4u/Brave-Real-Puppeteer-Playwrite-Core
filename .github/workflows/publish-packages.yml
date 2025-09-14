@@ -212,8 +212,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Commit version changes
-          git add package.json package-lock.json
+          # Commit version changes (only package.json, package-lock.json is in .gitignore)
+          git add package.json
           git commit -m "🚀 Release v$NEW_VERSION with latest Puppeteer ${{ steps.versions.outputs.puppeteer_version }} & Playwright ${{ steps.versions.outputs.playwright_version }}" || exit 0
           
           # Create and push tag
