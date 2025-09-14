@@ -1,9 +1,9 @@
 name: 🦁 Brave NPM Auto-Publish
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # manually भी चला सकते हो
   push:
-    branches: [ main ]
+    branches: [ main ] # main branch पर push होने पर run
     paths-ignore:
       - 'README.md'
       - 'docs/**'
@@ -29,13 +29,13 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 🆕 Auto bump version + create tag
+      # 🆕 Auto bump patch version + create git tag
       - name: 🔧 Bump Version and Create Git Tag
         id: version
         uses: phips28/gh-action-bump-version@master
         with:
           tag-prefix: "v"       # tag बनेगा v1.0.1 जैसा
-          default: patch        # हर बार patch bump (1.0.0 → 1.0.1)
+          default: patch        # हमेशा patch bump होगा
           commit-message: "🔖 release: {version}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
