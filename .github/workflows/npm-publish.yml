@@ -5,13 +5,15 @@ name: 🦁 Brave NPM Auto-Publish
 
 on:
   workflow_dispatch:
+  
   push:
     branches: [ main ]
     paths-ignore:
       - 'README.md'
       - 'docs/**'
       - '.gitignore'
-
+permissions:
+  contents: write
 jobs:
   auto-version-and-publish:
     runs-on: ubuntu-latest
@@ -21,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -39,7 +41,7 @@ jobs:
           tag-prefix: "v"
           bump-policy: patch
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: 📊 Show New Version
         run: |
