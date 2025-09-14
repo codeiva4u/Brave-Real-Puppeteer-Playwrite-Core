@@ -1,11 +1,11 @@
-name: 🦁 Brave NPM Auto-Publish Workflow (Manual + Automatic)
+name: 🦁 Brave NPM Auto-Publish Workflow (Manual + Weekly Auto)
 on:
-  # 🤖 AUTOMATIC: Daily check for new versions at 12:00 UTC
+  # 🤖 AUTOMATIC: Weekly check for new versions every Monday at 12:00 UTC
   schedule:
-    - cron: '0 12 * * *'  # Daily at 12:00 UTC (adjust timezone as needed)
+    - cron: '0 12 * * 1'  # Weekly on Monday at 12:00 UTC (adjust timezone as needed)
     # Alternative schedules (uncomment as needed):
-    # - cron: '0 12 * * 1'    # Weekly on Monday
-    # - cron: '0 12 1 * *'    # Monthly on 1st day
+    # - cron: '0 12 * * *'    # Daily check (more frequent)
+    # - cron: '0 12 1 * *'    # Monthly on 1st day (less frequent)
   
   # 🎯 MANUAL: Run workflow manually with options
   workflow_dispatch:
@@ -184,7 +184,7 @@ jobs:
         if: github.event_name == 'schedule' && steps.versions.outputs.updates_available == 'false'
         run: |
           echo "😴 No updates available - skipping automatic run"
-          echo "📅 Next automatic check: Tomorrow at 12:00 UTC"
+          echo "📅 Next automatic check: Next Monday at 12:00 UTC"
           echo "🎯 Manual runs: Always execute (use 'Run workflow' button)"
           exit 0
           
@@ -344,12 +344,12 @@ jobs:
           
           # Determine run type
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "### 🤖 AUTOMATIC RUN (Daily Check at 12:00 UTC)"
+            echo "### 🤖 AUTOMATIC RUN (Weekly Check - Monday at 12:00 UTC)"
             if [ "${{ steps.versions.outputs.updates_available }}" = "true" ]; then
               echo "✅ Updates detected and processed automatically!"
             else
               echo "😴 No updates available - workflow completed quickly"
-              echo "📅 Next check: Tomorrow at 12:00 UTC"
+              echo "📅 Next check: Next Monday at 12:00 UTC"
             fi
           else
             echo "### 🎯 MANUAL RUN (User Triggered)"
@@ -378,7 +378,7 @@ jobs:
           
           echo ""
           echo "### 🌐 Repository Status:"
-          echo "- 🤖 **Automatic Updates**: Daily at 12:00 UTC"
+          echo "- 🤖 **Automatic Updates**: Weekly on Monday at 12:00 UTC"
           echo "- 🎯 **Manual Runs**: Available anytime via 'Run workflow' button"
           echo "- 🛡️ **Features**: 80+ professional stealth features always included"
           echo "- ⚡ **Performance**: 1-5ms ultra-fast timing maintained"
