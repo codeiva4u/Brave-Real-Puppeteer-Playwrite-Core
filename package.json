@@ -111,8 +111,8 @@
     "yargs": "^17.7.2"
   },
   "optionalDependencies": {
-    "puppeteer-core": "^24.20.0",
-    "playwright-core": "^1.55.0"
+    "playwright-core": "^1.55.0",
+    "puppeteer-core": "^24.20.0"
   },
   "devDependencies": {
     "test": "^3.3.0"
