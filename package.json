@@ -112,7 +112,7 @@
   },
   "optionalDependencies": {
     "playwright-core": "^1.55.0",
-    "puppeteer-core": "^24.20.0"
+    "puppeteer-core": "^24.22.0"
   },
   "devDependencies": {
     "test": "^3.3.0"
