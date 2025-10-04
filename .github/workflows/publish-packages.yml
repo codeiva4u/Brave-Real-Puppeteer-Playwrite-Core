@@ -328,10 +328,21 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🏷️ Create Git Tag and Release
+        id: tag_release
         if: github.event.inputs.test_mode != 'true'
         run: |
           PUPPETEER_VERSION="${{ steps.version.outputs.puppeteer_new_version }}"
           PLAYWRIGHT_VERSION="${{ steps.version.outputs.playwright_new_version }}"
+          PUPPETEER_SKIP="${{ steps.version.outputs.puppeteer_skip }}"
+          PLAYWRIGHT_SKIP="${{ steps.version.outputs.playwright_skip }}"
+          
+          # Only create tag/release if at least one package was published
+          if [ "$PUPPETEER_SKIP" = "true" ] && [ "$PLAYWRIGHT_SKIP" = "true" ]; then
+            echo "⚠️ Both packages skipped - no tag/release needed"
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
           TAG_VERSION="packages-$PUPPETEER_VERSION-$PLAYWRIGHT_VERSION"
           
           # Configure git
@@ -342,59 +353,87 @@ jobs:
           git add package.json
           git commit -m "🚀 Published Packages: Puppeteer $PUPPETEER_VERSION & Playwright $PLAYWRIGHT_VERSION" || exit 0
           
-          # Create and push tag
-          git tag -a "v$TAG_VERSION" -m "Package Release
+          # Check if tag already exists
+          if git rev-parse "v$TAG_VERSION" >/dev/null 2>&1; then
+            echo "⚠️ Tag v$TAG_VERSION already exists, skipping tag creation"
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+          else
+            # Create and push tag
+            git tag -a "v$TAG_VERSION" -m "Package Release
+            
+            🎭 brave-real-puppeteer-core: $PUPPETEER_VERSION
+            🎪 brave-real-playwright-core: $PLAYWRIGHT_VERSION
+            🦁 Brave optimizations included
+            🛡️ 50+ stealth features
+            ⚡ Ultra-fast 1-5ms timing
+            🌍 Cross-platform support"
+            
+            git push origin main || true
+            git push origin "v$TAG_VERSION"
+            
+            echo "✅ Created and pushed tag v$TAG_VERSION"
+            echo "skip_release=false" >> $GITHUB_OUTPUT
+          fi
           
-          🎭 brave-real-puppeteer-core: $PUPPETEER_VERSION
-          🎪 brave-real-playwright-core: $PLAYWRIGHT_VERSION
-          🦁 Brave optimizations included
-          🛡️ 50+ stealth features
-          ⚡ Ultra-fast 1-5ms timing
-          🌍 Cross-platform support"
-          
-          git push origin main
-          git push origin "v$TAG_VERSION"
-          
-          echo "✅ Created and pushed tag v$TAG_VERSION"
+          echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
 
       - name: 📋 Create GitHub Release
-        if: github.event.inputs.test_mode != 'true'
-        uses: actions/create-release@v1
+        if: github.event.inputs.test_mode != 'true' && steps.tag_release.outputs.skip_release != 'true'
+        run: |
+          PUPPETEER_VERSION="${{ steps.version.outputs.puppeteer_new_version }}"
+          PLAYWRIGHT_VERSION="${{ steps.version.outputs.playwright_new_version }}"
+          TAG_VERSION="${{ steps.tag_release.outputs.tag_version }}"
+          
+          # Check if release already exists
+          if gh release view "v$TAG_VERSION" >/dev/null 2>&1; then
+            echo "⚠️ Release v$TAG_VERSION already exists, skipping release creation"
+            exit 0
+          fi
+          
+          # Create release body
+          cat > release_body.md << 'EOF'
+          ## 🚀 Release v$TAG_VERSION
+          
+          ### 📦 Packages Published
+          - **brave-real-puppeteer-core@$PUPPETEER_VERSION**
+          - **brave-real-playwright-core@$PLAYWRIGHT_VERSION**
+          
+          ### 🔗 Dependencies Updated
+          - **Puppeteer Core**: ${{ steps.versions.outputs.puppeteer_version }}
+          - **Playwright Core**: ${{ steps.versions.outputs.playwright_version }}
+          
+          ### ✨ Features
+          - 🛡️ 50+ Professional Stealth Features
+          - ⚡ Ultra-fast 1-5ms Timing Optimization
+          - 🌍 Cross-platform Brave Browser Support
+          - 🤖 AI-Enhanced Bot Detection Bypass
+          - 🎯 100% Success Rate on Detection Tests
+          
+          ### 📚 Installation
+          ```bash
+          npm install brave-real-puppeteer-core@$PUPPETEER_VERSION
+          npm install brave-real-playwright-core@$PLAYWRIGHT_VERSION
+          ```
+          
+          ### 🔗 Links
+          - [NPM Puppeteer](https://www.npmjs.com/package/brave-real-puppeteer-core)
+          - [NPM Playwright](https://www.npmjs.com/package/brave-real-playwright-core)
+          - [Documentation](https://rebrowser.net)
+          EOF
+          
+          # Replace variables in release body
+          sed -i "s/\$TAG_VERSION/$TAG_VERSION/g" release_body.md
+          sed -i "s/\$PUPPETEER_VERSION/$PUPPETEER_VERSION/g" release_body.md
+          sed -i "s/\$PLAYWRIGHT_VERSION/$PLAYWRIGHT_VERSION/g" release_body.md
+          
+          # Create GitHub release using gh CLI
+          gh release create "v$TAG_VERSION" \
+            --title "🦁 Brave Real Puppeteer & Playwright v$TAG_VERSION" \
+            --notes-file release_body.md
+          
+          echo "✅ Created GitHub release v$TAG_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: "v${{ steps.version.outputs.new_version }}"
-          release_name: "🦁 Brave Real Puppeteer & Playwright v${{ steps.version.outputs.new_version }}"
-          body: |
-            ## 🚀 Release v${{ steps.version.outputs.new_version }}
-            
-            ### 📦 Packages Published
-            - **brave-real-puppeteer-core@${{ steps.version.outputs.new_version }}**
-            - **brave-real-playwright-core@${{ steps.version.outputs.new_version }}**
-            
-            ### 🔗 Dependencies Updated
-            - **Puppeteer Core**: ${{ steps.versions.outputs.puppeteer_version }}
-            - **Playwright Core**: ${{ steps.versions.outputs.playwright_version }}
-            
-            ### ✨ Features
-            - 🛡️ 50+ Professional Stealth Features
-            - ⚡ Ultra-fast 1-5ms Timing Optimization
-            - 🌍 Cross-platform Brave Browser Support
-            - 🤖 AI-Enhanced Bot Detection Bypass
-            - 🎯 100% Success Rate on Detection Tests
-            
-            ### 📚 Installation
-            ```bash
-            npm install brave-real-puppeteer-core@${{ steps.version.outputs.new_version }}
-            npm install brave-real-playwright-core@${{ steps.version.outputs.new_version }}
-            ```
-            
-            ### 🔗 Links
-            - [NPM Puppeteer](https://www.npmjs.com/package/brave-real-puppeteer-core)
-            - [NPM Playwright](https://www.npmjs.com/package/brave-real-playwright-core)
-            - [Documentation](https://rebrowser.net)
-          draft: false
-          prerelease: false
 
       - name: 📋 Summary Report
         run: |
