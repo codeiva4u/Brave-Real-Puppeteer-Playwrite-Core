@@ -126,31 +126,78 @@ jobs:
           PUPPETEER_CURRENT=$(npm view brave-real-puppeteer-core version 2>/dev/null || echo "")
           PLAYWRIGHT_CURRENT=$(npm view brave-real-playwright-core version 2>/dev/null || echo "")
           
-          # Generate versions based on dependency versions
+          # Generate versions based on dependency versions with smart increment
+          PUPPETEER_SKIP="false"
+          PLAYWRIGHT_SKIP="false"
+          
+          # Smart version generation for Puppeteer
           if [ "$PUPPETEER_CURRENT" = "$PUPPETEER_VERSION" ]; then
-            # If same version exists, add patch increment
-            PUPPETEER_NEW_VERSION="$PUPPETEER_VERSION-patch.1"
-            echo "🔄 Puppeteer: $PUPPETEER_VERSION already exists, using $PUPPETEER_NEW_VERSION"
+            # Check if patch version exists, try incrementing
+            PATCH_NUM=1
+            PUPPETEER_NEW_VERSION="$PUPPETEER_VERSION-patch.$PATCH_NUM"
+            
+            while npm view "brave-real-puppeteer-core@$PUPPETEER_NEW_VERSION" version 2>/dev/null; do
+              PATCH_NUM=$((PATCH_NUM + 1))
+              PUPPETEER_NEW_VERSION="$PUPPETEER_VERSION-patch.$PATCH_NUM"
+              if [ $PATCH_NUM -gt 10 ]; then
+                echo "⚠️ Puppeteer: Too many patch versions exist for $PUPPETEER_VERSION, skipping publish"
+                PUPPETEER_SKIP="true"
+                break
+              fi
+            done
+            
+            if [ "$PUPPETEER_SKIP" = "false" ]; then
+              echo "🔄 Puppeteer: $PUPPETEER_VERSION already exists, using $PUPPETEER_NEW_VERSION"
+            fi
           else
             PUPPETEER_NEW_VERSION="$PUPPETEER_VERSION"
-            echo "✅ Puppeteer: Using base version $PUPPETEER_NEW_VERSION"
+            # Check if this exact version already exists (shouldn't happen but safety check)
+            if npm view "brave-real-puppeteer-core@$PUPPETEER_NEW_VERSION" version 2>/dev/null; then
+              echo "⚠️ Puppeteer: Version $PUPPETEER_NEW_VERSION already published, skipping"
+              PUPPETEER_SKIP="true"
+            else
+              echo "✅ Puppeteer: Using base version $PUPPETEER_NEW_VERSION"
+            fi
           fi
           
+          # Smart version generation for Playwright
           if [ "$PLAYWRIGHT_CURRENT" = "$PLAYWRIGHT_VERSION" ]; then
-            # If same version exists, add patch increment  
-            PLAYWRIGHT_NEW_VERSION="$PLAYWRIGHT_VERSION-patch.1"
-            echo "🔄 Playwright: $PLAYWRIGHT_VERSION already exists, using $PLAYWRIGHT_NEW_VERSION"
+            # Check if patch version exists, try incrementing
+            PATCH_NUM=1
+            PLAYWRIGHT_NEW_VERSION="$PLAYWRIGHT_VERSION-patch.$PATCH_NUM"
+            
+            while npm view "brave-real-playwright-core@$PLAYWRIGHT_NEW_VERSION" version 2>/dev/null; do
+              PATCH_NUM=$((PATCH_NUM + 1))
+              PLAYWRIGHT_NEW_VERSION="$PLAYWRIGHT_VERSION-patch.$PATCH_NUM"
+              if [ $PATCH_NUM -gt 10 ]; then
+                echo "⚠️ Playwright: Too many patch versions exist for $PLAYWRIGHT_VERSION, skipping publish"
+                PLAYWRIGHT_SKIP="true"
+                break
+              fi
+            done
+            
+            if [ "$PLAYWRIGHT_SKIP" = "false" ]; then
+              echo "🔄 Playwright: $PLAYWRIGHT_VERSION already exists, using $PLAYWRIGHT_NEW_VERSION"
+            fi
           else
             PLAYWRIGHT_NEW_VERSION="$PLAYWRIGHT_VERSION"
-            echo "✅ Playwright: Using base version $PLAYWRIGHT_NEW_VERSION"
+            # Check if this exact version already exists (shouldn't happen but safety check)
+            if npm view "brave-real-playwright-core@$PLAYWRIGHT_NEW_VERSION" version 2>/dev/null; then
+              echo "⚠️ Playwright: Version $PLAYWRIGHT_NEW_VERSION already published, skipping"
+              PLAYWRIGHT_SKIP="true"
+            else
+              echo "✅ Playwright: Using base version $PLAYWRIGHT_NEW_VERSION"
+            fi
           fi
           
           echo "puppeteer_new_version=$PUPPETEER_NEW_VERSION" >> $GITHUB_OUTPUT
           echo "playwright_new_version=$PLAYWRIGHT_NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "puppeteer_skip=$PUPPETEER_SKIP" >> $GITHUB_OUTPUT
+          echo "playwright_skip=$PLAYWRIGHT_SKIP" >> $GITHUB_OUTPUT
           
           echo "🏷️ Package versions will be:"
-          echo "  🎭 Puppeteer: $PUPPETEER_NEW_VERSION"
-          echo "  🎪 Playwright: $PLAYWRIGHT_NEW_VERSION"
+          echo "  🎭 Puppeteer: $PUPPETEER_NEW_VERSION (Skip: $PUPPETEER_SKIP)"
+          echo "  🎪 Playwright: $PLAYWRIGHT_NEW_VERSION (Skip: $PLAYWRIGHT_SKIP)"
 
       - name: ⚙️ Update Package Versions
         run: |
@@ -191,10 +238,14 @@ jobs:
       - name: 📦 Create Brave Puppeteer Package
         # 🎯 MANUAL: Respect user choice (publish_puppeteer input)
         # 🤖 AUTO: Only if Puppeteer update available
+        # ⚠️ SKIP: If version already exists on npm
         if: |
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_puppeteer != 'false') ||
-          (github.event_name == 'schedule' && steps.versions.outputs.puppeteer_update == 'true') ||
-          github.event.inputs.force_publish == 'true'
+          steps.version.outputs.puppeteer_skip != 'true' &&
+          (
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_puppeteer != 'false') ||
+            (github.event_name == 'schedule' && steps.versions.outputs.puppeteer_update == 'true') ||
+            github.event.inputs.force_publish == 'true'
+          )
         run: |
           PUPPETEER_NEW_VERSION="${{ steps.version.outputs.puppeteer_new_version }}"
           PUPPETEER_VERSION="${{ steps.versions.outputs.puppeteer_version }}"
@@ -207,10 +258,14 @@ jobs:
       - name: 📦 Create Brave Playwright Package  
         # 🎯 MANUAL: Respect user choice (publish_playwright input)
         # 🤖 AUTO: Only if Playwright update available
+        # ⚠️ SKIP: If version already exists on npm
         if: |
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_playwright != 'false') ||
-          (github.event_name == 'schedule' && steps.versions.outputs.playwright_update == 'true') ||
-          github.event.inputs.force_publish == 'true'
+          steps.version.outputs.playwright_skip != 'true' &&
+          (
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_playwright != 'false') ||
+            (github.event_name == 'schedule' && steps.versions.outputs.playwright_update == 'true') ||
+            github.event.inputs.force_publish == 'true'
+          )
         run: |
           PLAYWRIGHT_NEW_VERSION="${{ steps.version.outputs.playwright_new_version }}"
           PLAYWRIGHT_VERSION="${{ steps.versions.outputs.playwright_version }}"
@@ -233,7 +288,9 @@ jobs:
       - name: 🚀 Publish Brave Puppeteer Package
         # 🎯 MANUAL: Respect test_mode and publish_puppeteer inputs
         # 🤖 AUTO: Only if Puppeteer update available and not test mode
+        # ⚠️ SKIP: If version already exists on npm
         if: |
+          steps.version.outputs.puppeteer_skip != 'true' &&
           (
             (github.event_name == 'workflow_dispatch' && github.event.inputs.test_mode != 'true' && github.event.inputs.publish_puppeteer != 'false') ||
             (github.event_name == 'schedule' && steps.versions.outputs.puppeteer_update == 'true') ||
@@ -252,7 +309,9 @@ jobs:
       - name: 🚀 Publish Brave Playwright Package
         # 🎯 MANUAL: Respect test_mode and publish_playwright inputs
         # 🤖 AUTO: Only if Playwright update available and not test mode
+        # ⚠️ SKIP: If version already exists on npm
         if: |
+          steps.version.outputs.playwright_skip != 'true' &&
           (
             (github.event_name == 'workflow_dispatch' && github.event.inputs.test_mode != 'true' && github.event.inputs.publish_playwright != 'false') ||
             (github.event_name == 'schedule' && steps.versions.outputs.playwright_update == 'true') ||
@@ -361,14 +420,35 @@ jobs:
           echo "- 🎭 Current Puppeteer: ${{ steps.versions.outputs.current_puppeteer }} → Latest: ${{ steps.versions.outputs.puppeteer_version }}"
           echo "- 🎪 Current Playwright: ${{ steps.versions.outputs.current_playwright }} → Latest: ${{ steps.versions.outputs.playwright_version }}"
           
+          # Check for skipped packages
+          PUPPETEER_SKIP="${{ steps.version.outputs.puppeteer_skip }}"
+          PLAYWRIGHT_SKIP="${{ steps.version.outputs.playwright_skip }}"
+          
+          if [ "$PUPPETEER_SKIP" = "true" ] || [ "$PLAYWRIGHT_SKIP" = "true" ]; then
+            echo ""
+            echo "### ⚠️ Skipped Packages (Already Published):"
+            if [ "$PUPPETEER_SKIP" = "true" ]; then
+              echo "- 🎭 brave-real-puppeteer-core@${{ steps.version.outputs.puppeteer_new_version }} - Version already exists on npm"
+            fi
+            if [ "$PLAYWRIGHT_SKIP" = "true" ]; then
+              echo "- 🎪 brave-real-playwright-core@${{ steps.version.outputs.playwright_new_version }} - Version already exists on npm"
+            fi
+          fi
+          
           if [ "${{ steps.versions.outputs.updates_available }}" = "true" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
             echo ""
             echo "### 📦 Published Packages:"
-            if [ "${{ steps.versions.outputs.puppeteer_update }}" = "true" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
+            PUBLISHED_ANY=false
+            if [ "${{ steps.versions.outputs.puppeteer_update }}" = "true" ] && [ "$PUPPETEER_SKIP" != "true" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ] && [ "$PUPPETEER_SKIP" != "true" ]; then
               echo "- 🎭 brave-real-puppeteer-core@${{ steps.version.outputs.puppeteer_new_version }}"
+              PUBLISHED_ANY=true
             fi
-            if [ "${{ steps.versions.outputs.playwright_update }}" = "true" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
+            if [ "${{ steps.versions.outputs.playwright_update }}" = "true" ] && [ "$PLAYWRIGHT_SKIP" != "true" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ] && [ "$PLAYWRIGHT_SKIP" != "true" ]; then
               echo "- 🎪 brave-real-playwright-core@${{ steps.version.outputs.playwright_new_version }}"
+              PUBLISHED_ANY=true
+            fi
+            if [ "$PUBLISHED_ANY" = "false" ]; then
+              echo "- None (all versions already published)"
             fi
           else
             echo ""
